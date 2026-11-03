@@ -190,6 +190,17 @@ $whatsappMessage = match ($language) {
     default => 'Bonjour El Olivar, je souhaite me renseigner pour une réservation.',
 };
 $whatsappUrl = 'https://wa.me/' . preg_replace('/\D/', '', $whatsappNumber) . '?text=' . rawurlencode($whatsappMessage);
+
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+    || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443);
+$scheme = $isHttps ? 'https' : 'http';
+$httpHost = $_SERVER['HTTP_HOST'] ?? 'elolivar.alindevx00x.me';
+$siteBaseUrl = getenv('APP_URL') ?: ($scheme . '://' . rtrim($httpHost, '/'));
+$scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+$appRootUrl = $siteBaseUrl . ($scriptDir !== '' && $scriptDir !== '/' ? $scriptDir : '');
+$shareImage = $appRootUrl . '/assets/images/exterior-mountain.jpg';
+$canonicalUrl = $appRootUrl . '/';
 ?>
 <!doctype html>
 <html lang="<?= h($language) ?>" dir="<?= $language === 'ar' ? 'rtl' : 'ltr' ?>">
@@ -210,12 +221,12 @@ $whatsappUrl = 'https://wa.me/' . preg_replace('/\D/', '', $whatsappNumber) . '?
     <meta property="og:site_name" content="El Olivar Zarqa">
     <meta property="og:title" content="<?= h(t('meta.title')) ?>">
     <meta property="og:description" content="<?= h(t('meta.description')) ?>">
-    <meta property="og:image" content="assets/images/exterior-mountain.jpg">
-    <meta property="og:url" content="<?= h($googleMapsUrl) ?>">
+    <meta property="og:image" content="<?= h($shareImage) ?>">
+    <meta property="og:url" content="<?= h($canonicalUrl) ?>">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="<?= h(t('meta.title')) ?>">
     <meta name="twitter:description" content="<?= h(t('meta.description')) ?>">
-    <meta name="twitter:image" content="assets/images/exterior-mountain.jpg">
+    <meta name="twitter:image" content="<?= h($shareImage) ?>">
 
     <!-- Schema.org Structured Data -->
     <script type="application/ld+json">
@@ -223,7 +234,8 @@ $whatsappUrl = 'https://wa.me/' . preg_replace('/\D/', '', $whatsappNumber) . '?
       "@context": "https://schema.org",
       "@type": ["LodgingBusiness", "BedAndBreakfast"],
       "name": "El Olivar Zarqa",
-      "image": "assets/images/exterior-mountain.jpg",
+      "url": <?= json_encode($canonicalUrl, JSON_UNESCAPED_SLASHES) ?>,
+      "image": <?= json_encode($shareImage, JSON_UNESCAPED_SLASHES) ?>,
       "description": <?= json_encode(t('meta.description'), JSON_UNESCAPED_UNICODE) ?>,
       "address": {
         "@type": "PostalAddress",

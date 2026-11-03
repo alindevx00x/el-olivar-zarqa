@@ -1,9 +1,10 @@
 -- Developer: Alindevx00x (https://alindevx00x.me)
-CREATE DATABASE IF NOT EXISTS el_olivar_zarqa
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
-
-USE el_olivar_zarqa;
+-- Database schema for El Olivar Zarqa
+-- Compatible with local dev (MAMP) and live servers (CloudPanel / cPanel / Docker)
+--
+-- CLI Import example:
+--   mysql -u elolivarzarqadbusr -p elolivarzarqadb < database.sql
+-- Or select your database in phpMyAdmin and import this file.
 
 CREATE TABLE IF NOT EXISTS stay_inquiries (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
