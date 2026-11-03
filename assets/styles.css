@@ -17,8 +17,8 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 100px; }
-body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 18px; line-height: 1.65; -webkit-font-smoothing: antialiased; }
+html { scroll-behavior: smooth; scroll-padding-top: 100px; overflow-x: clip; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 18px; line-height: 1.65; -webkit-font-smoothing: antialiased; overflow-x: clip; }
 body, button, input, select, textarea { font-family: var(--sans); }
 img { display: block; width: 100%; }
 a { color: inherit; text-decoration: none; }
@@ -166,6 +166,8 @@ h2 { margin: 0; font-family: var(--serif); font-size: clamp(42px, 5.2vw, 65px); 
 .booking-option__logo--booking img { width: 30px; height: 30px; border-radius: 6px; }
 .booking-option__logo--airbnb { background: #ff385c; }
 .booking-option__logo--airbnb img { width: 20px; height: 20px; filter: brightness(0) invert(1); }
+.booking-option__logo--instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%); }
+.booking-option__logo--instagram img { width: 20px; height: 20px; filter: brightness(0) invert(1); }
 .booking-option__arrow { color: #d7c09d; font-size: 17px; }
 .booking-option strong { align-self: end; font-size: 15px; font-weight: 600; }
 .booking-option > span:last-child { align-self: end; color: rgba(255,255,255,.6); font-size: 12px; text-align: right; }
@@ -198,7 +200,7 @@ h2 { margin: 0; font-family: var(--serif); font-size: clamp(42px, 5.2vw, 65px); 
 .button--olive { background: var(--olive); color: white; cursor: pointer; }
 .inquiry-form__submit { width: 100%; justify-content: space-between; padding-inline: 18px; }
 .inquiry-form__privacy { margin: 11px 0 0; color: #8a8e86; font-size: 11px; text-align: center; }
-.form-trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.form-trap { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; clip-path: inset(50%) !important; white-space: nowrap !important; border: 0 !important; opacity: 0 !important; pointer-events: none !important; }
 
 .faq { display: grid; grid-template-columns: .8fr 1.2fr; gap: 9%; padding-top: 95px; padding-bottom: 110px; }
 .faq__heading h2 { font-size: clamp(35px, 4vw, 48px); }
@@ -407,20 +409,44 @@ h2 { margin: 0; font-family: var(--serif); font-size: clamp(42px, 5.2vw, 65px); 
     .footer-bottom span:nth-child(2) { display: none; }
 }
 
-html[lang="ar"] body { font-family: "DM Sans", "Noto Sans Arabic", Arial, sans-serif; }
-html[lang="ar"] h1, html[lang="ar"] h2, html[lang="ar"] h3, html[lang="ar"] .intro__note { font-family: "Noto Sans Arabic", Arial, sans-serif; letter-spacing: 0; }
+html[lang="ar"] body,
+html[lang="ar"] button,
+html[lang="ar"] input,
+html[lang="ar"] select,
+html[lang="ar"] textarea {
+    font-family: "Alyamama", serif, Arial, sans-serif;
+    font-optical-sizing: auto;
+}
+html[lang="ar"] h1,
+html[lang="ar"] h2,
+html[lang="ar"] h3,
+html[lang="ar"] .intro__note,
+html[lang="ar"] .brand__text strong,
+html[lang="ar"] .eyebrow,
+html[lang="ar"] .booking-option strong {
+    font-family: "Alyamama", serif, Georgia, serif;
+    font-optical-sizing: auto;
+    letter-spacing: 0;
+}
+html[dir="rtl"] { overflow-x: clip; }
+html[dir="rtl"] body { overflow-x: clip; }
 html[dir="rtl"] .eyebrow { letter-spacing: .02em; }
 html[dir="rtl"] .hero__veil { background: linear-gradient(270deg, rgba(18, 31, 23, .72) 0%, rgba(22, 36, 25, .49) 36%, rgba(25, 38, 29, .08) 79%), linear-gradient(0deg, rgba(16, 25, 19, .43), transparent 24%); }
 html[dir="rtl"] .hero__content, html[dir="rtl"] .intro__copy, html[dir="rtl"] .section-heading, html[dir="rtl"] .comfort__head, html[dir="rtl"] .surroundings__copy, html[dir="rtl"] .contact__intro, html[dir="rtl"] .faq__heading { text-align: right; }
 html[dir="rtl"] .hero__seal { right: auto; left: 8.4%; }
+html[dir="rtl"] .intro__note { right: auto; left: 9%; }
+html[dir="rtl"] .surroundings__stamp { right: auto; left: -16px; }
+html[dir="rtl"] .comfort-card__number { right: auto; left: 0; }
 html[dir="rtl"] .intro__visual, html[dir="rtl"] .surroundings__visual, html[dir="rtl"] .gallery-grid { direction: ltr; }
 html[dir="rtl"] .gallery-tile__label { direction: rtl; text-align: right; }
-html[dir="rtl"] .booking-option > span:last-child { text-align: right; }
+html[dir="rtl"] .gallery-tile__zoom { right: auto; left: 14px; }
+html[dir="rtl"] .booking-option > span:last-child { text-align: left; }
 html[dir="rtl"] .footer-main, html[dir="rtl"] .footer-bottom { direction: rtl; }
 html[dir="rtl"] .footer-links { text-align: right; }
 html[dir="rtl"] .form-notice--success { border-right: 3px solid var(--olive); border-left: 0; }
 html[dir="rtl"] .form-notice--error { border-right: 3px solid #ac6848; border-left: 0; }
 html[dir="rtl"] .faq-list details p { margin-right: 0; margin-left: 40px; }
+html[dir="rtl"] .language-switcher__options { right: auto; left: 0; }
 
 @media (max-width: 760px) {
     html[dir="rtl"] .hero__veil { background: linear-gradient(270deg, rgba(18,31,23,.68), rgba(18,31,23,.19)), linear-gradient(0deg, rgba(16,25,19,.45), transparent 40%); }

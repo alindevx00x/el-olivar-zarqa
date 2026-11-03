@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS stay_inquiries (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     full_name VARCHAR(120) NOT NULL,
     email VARCHAR(254) NOT NULL,
+    phone VARCHAR(50) NULL,
     arrival_date DATE NOT NULL,
     departure_date DATE NOT NULL,
     guests TINYINT UNSIGNED NOT NULL,

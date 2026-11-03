@@ -57,6 +57,7 @@ function admin_google_calendar_url(array $request): string
     $fullName = (string) ($request['full_name'] ?? '');
     $guests = (int) ($request['guests'] ?? 1);
     $email = (string) ($request['email'] ?? '');
+    $phone = (string) ($request['phone'] ?? '');
     $arrival = (string) ($request['arrival_date'] ?? '');
     $departure = (string) ($request['departure_date'] ?? '');
     $message = (string) ($request['message'] ?? '');
@@ -79,6 +80,7 @@ function admin_google_calendar_url(array $request): string
         . "------------------------------\n"
         . "Client : " . $fullName . "\n"
         . "Email : " . $email . "\n"
+        . ($phone !== '' ? "Tél / WhatsApp : " . $phone . "\n" : "")
         . "Voyageurs : " . $guests . "\n"
         . "Dates : " . $arrival . " -> " . $departure . "\n"
         . "Message :\n" . ($message !== '' ? $message : '(Aucun message)') . "\n"

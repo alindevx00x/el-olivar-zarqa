@@ -73,9 +73,25 @@ function database_connection(): PDO
         $database
     );
 
-    return new PDO($dsn, $username, $password, [
+    $pdo = new PDO($dsn, $username, $password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
+
+    // Self-healing migration for phone column if table already exists
+    static $migrationChecked = false;
+    if (!$migrationChecked) {
+        $migrationChecked = true;
+        try {
+            $checkStmt = $pdo->query("SHOW COLUMNS FROM stay_inquiries LIKE 'phone'");
+            if ($checkStmt && $checkStmt->fetch() === false) {
+                $pdo->exec("ALTER TABLE stay_inquiries ADD COLUMN phone VARCHAR(50) NULL AFTER email");
+            }
+        } catch (Throwable) {
+            // Ignore if table does not exist yet (e.g. initial setup)
+        }
+    }
+
+    return $pdo;
 }

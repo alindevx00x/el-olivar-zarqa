@@ -55,6 +55,7 @@ $today = (new DateTimeImmutable('today'))->format('Y-m-d');
 $formValues = [
     'name' => '',
     'email' => '',
+    'phone' => '',
     'arrival' => '',
     'departure' => '',
     'guests' => '2',
@@ -83,6 +84,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (!filter_var($formValues['email'], FILTER_VALIDATE_EMAIL) || strlen($formValues['email']) > 254) {
         $errors[] = t('form.error.email');
+    }
+    $phoneTrimmed = trim($formValues['phone']);
+    if ($phoneTrimmed === '' || !preg_match('/^[0-9+\s().-]{6,40}$/', $phoneTrimmed)) {
+        $errors[] = t('form.error.phone');
     }
     $arrivalIsValid = valid_iso_date($formValues['arrival']);
     $departureIsValid = valid_iso_date($formValues['departure']);
@@ -124,13 +129,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo = database_connection();
             $statement = $pdo->prepare(
                 'INSERT INTO stay_inquiries
-                    (full_name, email, arrival_date, departure_date, guests, message, consent_at)
+                    (full_name, email, phone, arrival_date, departure_date, guests, message, consent_at)
                  VALUES
-                    (:full_name, :email, :arrival_date, :departure_date, :guests, :message, CURRENT_TIMESTAMP)'
+                    (:full_name, :email, :phone, :arrival_date, :departure_date, :guests, :message, CURRENT_TIMESTAMP)'
             );
             $statement->execute([
                 ':full_name' => $formValues['name'],
                 ':email' => $formValues['email'],
+                ':phone' => $phoneTrimmed,
                 ':arrival_date' => $formValues['arrival'],
                 ':departure_date' => $formValues['departure'],
                 ':guests' => (int) $formValues['guests'],
@@ -216,6 +222,7 @@ $scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')
 $appRootUrl = $siteBaseUrl . ($scriptDir !== '' && $scriptDir !== '/' ? $scriptDir : '');
 $shareImage = $appRootUrl . '/assets/images/exterior-mountain.jpg';
 $canonicalUrl = $appRootUrl . '/';
+$arrow = $language === 'ar' ? '↖' : '↗';
 ?>
 <!doctype html>
 <html lang="<?= h($language) ?>" dir="<?= $language === 'ar' ? 'rtl' : 'ltr' ?>">
@@ -228,7 +235,7 @@ $canonicalUrl = $appRootUrl . '/';
     <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Alyamama:wght@300..900&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <?php
         $stylesCssPath = __DIR__ . '/assets/styles.css';
         $stylesCssVer = file_exists($stylesCssPath) ? (string) filemtime($stylesCssPath) : '1';
@@ -293,7 +300,7 @@ $canonicalUrl = $appRootUrl . '/';
 <body>
     <a class="skip-link" href="#contenu"><?= h(t('skip.content')) ?></a>
     <header class="site-header" id="haut">
-        <div class="topline"><span><?= h(t('announcement')) ?></span><a class="topline__place" href="<?= h($googleMapsUrl) ?>" target="_blank" rel="noopener noreferrer"><?= h(t('location')) ?> ↗</a></div>
+        <div class="topline"><span><?= h(t('announcement')) ?></span><a class="topline__place" href="<?= h($googleMapsUrl) ?>" target="_blank" rel="noopener noreferrer"><?= h(t('location')) ?> <?= $arrow ?></a></div>
         <div class="header-inner">
             <a class="brand" href="#haut" aria-label="<?= h(t('brand.home')) ?>">
                 <img class="brand__mark" src="assets/icon.svg" alt="">
@@ -321,7 +328,7 @@ $canonicalUrl = $appRootUrl . '/';
                     <a href="?lang=ar#haut" lang="ar" dir="rtl" <?= $language === 'ar' ? 'aria-current="page"' : '' ?>><img src="assets/flags/ar.svg" alt=""><span>العربية</span></a>
                 </div>
             </details>
-            <a class="button button--nav" href="#reserver"><?= h(t('navigation.reserve')) ?> <span aria-hidden="true">↗</span></a>
+            <a class="button button--nav" href="#reserver"><?= h(t('navigation.reserve')) ?> <span aria-hidden="true"><?= $arrow ?></span></a>
         </div>
     </header>
 
@@ -337,7 +344,7 @@ $canonicalUrl = $appRootUrl . '/';
                 <h1 id="hero-title"><?= h(t('hero.line1')) ?><br><?= h(t('hero.line2')) ?></h1>
                 <p class="hero__intro"><?= h(t('hero.intro')) ?></p>
                 <div class="hero__actions">
-                    <a class="button button--cream" href="#reserver"><?= h(t('hero.cta')) ?> <span aria-hidden="true">↗</span></a>
+                    <a class="button button--cream" href="#reserver"><?= h(t('hero.cta')) ?> <span aria-hidden="true"><?= $arrow ?></span></a>
                     <a class="text-link text-link--light" href="#maison"><?= h(t('hero.discover')) ?> <span aria-hidden="true">↓</span></a>
                 </div>
             </div>
@@ -388,7 +395,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/exterior-mountain.webp" type="image/webp">
                         <img src="assets/images/exterior-mountain.jpg" alt="<?= h(t('alt.house')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.house')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.house')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
 
                 <!-- 2. Salon vue jardin -->
@@ -397,7 +404,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/living-room-booking.webp" type="image/webp">
                         <img src="assets/images/living-room-booking.jpg" alt="<?= h(t('alt.living')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.living')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.living')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
 
                 <!-- 3. Première chambre -->
@@ -406,7 +413,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/bedroom.webp" type="image/webp">
                         <img src="assets/images/bedroom.jpg" alt="<?= h(t('alt.bedroom')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.bedroom')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.bedroom')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
 
                 <!-- 4. Deuxième chambre (lits jumeaux - Airbnb) -->
@@ -415,7 +422,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/bedroom-twin.webp" type="image/webp">
                         <img src="assets/images/bedroom-twin.jpg" alt="<?= h(t('alt.bedroom_twin')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.bedroom_twin')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.bedroom_twin')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
 
                 <!-- 5. Salle de bain complète (Airbnb) -->
@@ -424,7 +431,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/bathroom.webp" type="image/webp">
                         <img src="assets/images/bathroom.jpg" alt="<?= h(t('alt.bathroom')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.bathroom')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.bathroom')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
 
                 <!-- 6. Pergola & terrasse extérieure (Large - Airbnb) -->
@@ -433,7 +440,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/terrace-pergola.webp" type="image/webp">
                         <img src="assets/images/terrace-pergola.jpg" alt="<?= h(t('alt.terrace_pergola')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.terrace_pergola')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.terrace_pergola')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
 
                 <!-- 7. Coin repas intérieur -->
@@ -442,7 +449,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/dining-area.webp" type="image/webp">
                         <img src="assets/images/dining-area.jpg" alt="<?= h(t('alt.dining')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.dining')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.dining')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
 
                 <!-- 8. Cuisine équipée -->
@@ -451,7 +458,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/kitchen.webp" type="image/webp">
                         <img src="assets/images/kitchen.jpg" alt="<?= h(t('alt.kitchen')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.kitchen')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.kitchen')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
 
                 <!-- 9. Grand salon marocain (Airbnb) -->
@@ -460,7 +467,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/traditional-salon.webp" type="image/webp">
                         <img src="assets/images/traditional-salon.jpg" alt="<?= h(t('alt.traditional_salon')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.traditional_salon')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.traditional_salon')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
 
                 <!-- 10. Patio & jardin arboré (Airbnb) -->
@@ -469,7 +476,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/patio-garden.webp" type="image/webp">
                         <img src="assets/images/patio-garden.jpg" alt="<?= h(t('alt.patio_garden')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.patio_garden')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.patio_garden')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
 
                 <!-- 11. Espace repas extérieur (Large - Airbnb) -->
@@ -478,7 +485,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/outdoor-dining.webp" type="image/webp">
                         <img src="assets/images/outdoor-dining.jpg" alt="<?= h(t('alt.outdoor_dining')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.outdoor_dining')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.outdoor_dining')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
 
                 <!-- 12. Façade ensoleillée (Airbnb) -->
@@ -487,7 +494,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/villa-facade.webp" type="image/webp">
                         <img src="assets/images/villa-facade.jpg" alt="<?= h(t('alt.villa_facade')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.villa_facade')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.villa_facade')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
 
                 <!-- 13. Terrasse ensoleillée -->
@@ -496,7 +503,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/terrace-sunlight.webp" type="image/webp">
                         <img src="assets/images/terrace-sunlight.jpg" alt="<?= h(t('alt.terrace')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.terrace')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.terrace')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
 
                 <!-- 14. Panorama spectaculaire vallée (Grande - Airbnb) -->
@@ -505,7 +512,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/panoramic-valley.webp" type="image/webp">
                         <img src="assets/images/panoramic-valley.jpg" alt="<?= h(t('alt.panoramic_valley')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.panoramic_valley')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.panoramic_valley')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
 
                 <!-- 15. Soirée en terrasse au crépuscule -->
@@ -514,7 +521,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/terrace-evening.webp" type="image/webp">
                         <img src="assets/images/terrace-evening.jpg" alt="<?= h(t('alt.evening')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.evening')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.evening')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
 
                 <!-- 16. Crêtes et montagnes -->
@@ -523,7 +530,7 @@ $canonicalUrl = $appRootUrl . '/';
                         <source srcset="assets/images/mountain-view.webp" type="image/webp">
                         <img src="assets/images/mountain-view.jpg" alt="<?= h(t('alt.mountain')) ?>" loading="lazy">
                     </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.mountain')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                    <span class="gallery-tile__label"><?= h(t('gallery.mountain')) ?></span><span class="gallery-tile__zoom" aria-hidden="true"><?= $arrow ?></span>
                 </button>
             </div>
         </section>
@@ -551,10 +558,10 @@ $canonicalUrl = $appRootUrl . '/';
                 <h2><?= h(t('surroundings.line1')) ?><br><?= h(t('surroundings.line2')) ?></h2>
                 <p class="surroundings__lead"><?= h(t('surroundings.intro')) ?></p>
                 <div class="place-list">
-                    <div class="place-list__item"><span class="place-list__marker">01</span><div><strong><?= h(t('surroundings.pool')) ?></strong><span><?= h(t('surroundings.pool.distance')) ?></span></div><span class="place-list__arrow" aria-hidden="true">↗</span></div>
-                    <div class="place-list__item"><span class="place-list__marker">02</span><div><strong><?= h(t('surroundings.city')) ?></strong><span><?= h(t('surroundings.city.distance')) ?></span></div><span class="place-list__arrow" aria-hidden="true">↗</span></div>
+                    <div class="place-list__item"><span class="place-list__marker">01</span><div><strong><?= h(t('surroundings.pool')) ?></strong><span><?= h(t('surroundings.pool.distance')) ?></span></div><span class="place-list__arrow" aria-hidden="true"><?= $arrow ?></span></div>
+                    <div class="place-list__item"><span class="place-list__marker">02</span><div><strong><?= h(t('surroundings.city')) ?></strong><span><?= h(t('surroundings.city.distance')) ?></span></div><span class="place-list__arrow" aria-hidden="true"><?= $arrow ?></span></div>
                 </div>
-                <a class="text-link text-link--olive" href="<?= h($googleMapsUrl) ?>" target="_blank" rel="noopener noreferrer"><?= h(t('surroundings.map')) ?> <span aria-hidden="true">↗</span></a>
+                <a class="text-link text-link--olive" href="<?= h($googleMapsUrl) ?>" target="_blank" rel="noopener noreferrer"><?= h(t('surroundings.map')) ?> <span aria-hidden="true"><?= $arrow ?></span></a>
             </div>
         </section>
 
@@ -568,14 +575,17 @@ $canonicalUrl = $appRootUrl . '/';
                 </div>
                 <div class="booking-options">
                     <a class="booking-option" href="<?= h($bookingUrl) ?>" target="_blank" rel="noopener noreferrer">
-                        <span class="booking-option__top"><span class="booking-option__logo booking-option__logo--booking"><img src="assets/booking.svg" alt="Booking.com" width="24" height="24"></span><span class="booking-option__arrow" aria-hidden="true">↗</span></span>
+                        <span class="booking-option__top"><span class="booking-option__logo booking-option__logo--booking"><img src="assets/booking.svg" alt="Booking.com" width="24" height="24"></span><span class="booking-option__arrow" aria-hidden="true"><?= $arrow ?></span></span>
                         <strong><?= h(t('booking.title')) ?></strong><span><?= h(t('booking.detail')) ?></span>
                     </a>
                     <a class="booking-option" href="<?= h($airbnbUrl) ?>" target="_blank" rel="noopener noreferrer">
-                        <span class="booking-option__top"><span class="booking-option__logo booking-option__logo--airbnb"><img src="assets/airbnb.svg" alt="Airbnb" width="22" height="22"></span><span class="booking-option__arrow" aria-hidden="true">↗</span></span>
+                        <span class="booking-option__top"><span class="booking-option__logo booking-option__logo--airbnb"><img src="assets/airbnb.svg" alt="Airbnb" width="22" height="22"></span><span class="booking-option__arrow" aria-hidden="true"><?= $arrow ?></span></span>
                         <strong><?= h(t('airbnb.title')) ?></strong><span><?= h(t('airbnb.detail')) ?></span>
                     </a>
-                    <p class="booking-options__social"><?= h(t('booking.social')) ?> <a href="<?= h($instagramUrl) ?>" target="_blank" rel="noopener noreferrer"><img class="social-inline-icon" src="assets/instagram.svg" alt="" width="14" height="14"> @el_olivar_zarqa <span aria-hidden="true">↗</span></a></p>
+                    <a class="booking-option booking-option--instagram" href="<?= h($instagramUrl) ?>" target="_blank" rel="noopener noreferrer">
+                        <span class="booking-option__top"><span class="booking-option__logo booking-option__logo--instagram"><img src="assets/instagram.svg" alt="Instagram" width="22" height="22"></span><span class="booking-option__arrow" aria-hidden="true"><?= $arrow ?></span></span>
+                        <strong>@el_olivar_zarqa</strong><span><?= h(t('booking.social')) ?></span>
+                    </a>
                 </div>
             </div>
         </section>
@@ -598,18 +608,21 @@ $canonicalUrl = $appRootUrl . '/';
                     <div class="field"><label for="name"><?= h(t('form.name')) ?></label><input id="name" name="name" type="text" maxlength="120" value="<?= h($formValues['name']) ?>" autocomplete="name" required></div>
                     <div class="field"><label for="email"><?= h(t('form.email')) ?></label><input id="email" name="email" type="email" maxlength="254" value="<?= h($formValues['email']) ?>" autocomplete="email" required></div>
                 </div>
-                <div class="form-row form-row--dates">
-                    <div class="field"><label for="arrival"><?= h(t('form.arrival')) ?></label><input id="arrival" name="arrival" type="date" min="<?= h($today) ?>" value="<?= h($formValues['arrival']) ?>" required></div>
-                    <div class="field"><label for="departure"><?= h(t('form.departure')) ?></label><input id="departure" name="departure" type="date" min="<?= h($today) ?>" value="<?= h($formValues['departure']) ?>" required></div>
+                <div class="form-row">
+                    <div class="field"><label for="phone"><?= h(t('form.phone')) ?></label><input id="phone" name="phone" type="tel" maxlength="40" value="<?= h($formValues['phone']) ?>" autocomplete="tel" placeholder="<?= h(t('form.phone.placeholder')) ?>" required></div>
                     <div class="field"><label for="guests"><?= h(t('form.guests')) ?></label><select id="guests" name="guests">
                         <?php for ($guestCount = 1; $guestCount <= 5; $guestCount++): ?>
                             <option value="<?= $guestCount ?>" <?= $formValues['guests'] === (string) $guestCount ? 'selected' : '' ?>><?= $guestCount ?> <?= h(t($guestCount === 1 ? 'form.guest.one' : 'form.guest.other')) ?></option>
                         <?php endfor; ?>
                     </select></div>
                 </div>
+                <div class="form-row form-row--dates">
+                    <div class="field"><label for="arrival"><?= h(t('form.arrival')) ?></label><input id="arrival" name="arrival" type="date" min="<?= h($today) ?>" value="<?= h($formValues['arrival']) ?>" required></div>
+                    <div class="field"><label for="departure"><?= h(t('form.departure')) ?></label><input id="departure" name="departure" type="date" min="<?= h($today) ?>" value="<?= h($formValues['departure']) ?>" required></div>
+                </div>
                 <div class="field"><label for="message"><?= h(t('form.message')) ?> <span><?= h(t('form.optional')) ?></span></label><textarea id="message" name="message" rows="3" maxlength="2000" placeholder="<?= h(t('form.placeholder')) ?>"><?= h($formValues['message']) ?></textarea></div>
                 <label class="consent"><input type="checkbox" name="consent" value="1" required <?= ($_POST['consent'] ?? '') === '1' ? 'checked' : '' ?>><span><?= h(t('form.consent')) ?></span></label>
-                <button class="button button--olive inquiry-form__submit" type="submit"><?= h(t('form.submit')) ?> <span aria-hidden="true">↗</span></button>
+                <button class="button button--olive inquiry-form__submit" type="submit"><?= h(t('form.submit')) ?> <span aria-hidden="true"><?= $arrow ?></span></button>
                 <p class="inquiry-form__privacy"><?= h(t('form.privacy')) ?></p>
             </form>
         </section>
@@ -631,10 +644,10 @@ $canonicalUrl = $appRootUrl . '/';
                 <span class="brand__text"><strong>EL OLIVAR</strong><small><?= h(t('brand.location')) ?></small></span>
             </a>
             <p><?= nl2br(h(str_replace('|', "\n", t('footer.tagline')))) ?></p>
-            <div class="footer-links"><a href="<?= h($bookingUrl) ?>" target="_blank" rel="noopener noreferrer"><img class="footer-link__icon" src="assets/booking.svg" alt="" width="14" height="14"> <?= h(t('footer.booking')) ?></a><a href="<?= h($airbnbUrl) ?>" target="_blank" rel="noopener noreferrer"><img class="footer-link__icon" src="assets/airbnb.svg" alt="" width="14" height="14"> <?= h(t('footer.airbnb')) ?></a><a href="<?= h($instagramUrl) ?>" target="_blank" rel="noopener noreferrer"><img class="footer-link__icon" src="assets/instagram.svg" alt="" width="14" height="14"> @el_olivar_zarqa ↗</a></div>
+            <div class="footer-links"><a href="<?= h($bookingUrl) ?>" target="_blank" rel="noopener noreferrer"><img class="footer-link__icon" src="assets/booking.svg" alt="" width="14" height="14"> <?= h(t('footer.booking')) ?></a><a href="<?= h($airbnbUrl) ?>" target="_blank" rel="noopener noreferrer"><img class="footer-link__icon" src="assets/airbnb.svg" alt="" width="14" height="14"> <?= h(t('footer.airbnb')) ?></a><a href="<?= h($instagramUrl) ?>" target="_blank" rel="noopener noreferrer"><img class="footer-link__icon" src="assets/instagram.svg" alt="" width="14" height="14"> @el_olivar_zarqa <?= $arrow ?></a></div>
             <a class="back-top" href="#haut"><?= h(t('footer.back')) ?> <span aria-hidden="true">↑</span></a>
         </div>
-        <div class="footer-bottom page-width"><span><?= h(str_replace('{year}', date('Y'), t('footer.copyright'))) ?></span><a class="footer-location-link" href="<?= h($googleMapsUrl) ?>" target="_blank" rel="noopener noreferrer"><?= h(t('footer.location')) ?> ↗</a><span><?= h(t('footer.made')) ?> <i aria-hidden="true">✳</i></span><a class="developer-credit" href="https://alindevx00x.me" target="_blank" rel="noopener noreferrer"><?= h(t('footer.developer')) ?> ↗</a></div>
+        <div class="footer-bottom page-width"><span><?= h(str_replace('{year}', date('Y'), t('footer.copyright'))) ?></span><a class="footer-location-link" href="<?= h($googleMapsUrl) ?>" target="_blank" rel="noopener noreferrer"><?= h(t('footer.location')) ?> <?= $arrow ?></a><span><?= h(t('footer.made')) ?> <i aria-hidden="true">✳</i></span><a class="developer-credit" href="https://alindevx00x.me" target="_blank" rel="noopener noreferrer"><?= h(t('footer.developer')) ?> <?= $arrow ?></a></div>
     </footer>
 
     <?php if ($whatsappEnabled): ?>

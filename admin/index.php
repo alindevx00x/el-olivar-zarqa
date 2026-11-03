@@ -231,7 +231,7 @@ if (admin_is_signed_in() && $databaseReady) {
     try {
         if (($_GET['export'] ?? '') === 'csv') {
             $exportRows = $pdo->query(
-                'SELECT id, full_name, email, arrival_date, departure_date, guests, message, consent_at, status, admin_notes, created_at
+                'SELECT id, full_name, email, phone, arrival_date, departure_date, guests, message, consent_at, status, admin_notes, created_at
                  FROM stay_inquiries ORDER BY created_at DESC, id DESC'
             )->fetchAll();
 
@@ -242,12 +242,13 @@ if (admin_is_signed_in() && $databaseReady) {
                 throw new RuntimeException('Unable to open CSV output stream.');
             }
             fwrite($output, "\xEF\xBB\xBF");
-            fputcsv($output, ['ID', 'Nom complet', 'E-mail', 'Arrivée', 'Départ', 'Voyageurs', 'Message', 'Consentement le', 'Statut', 'Note interne', 'Demande reçue le'], ',', '"', '');
+            fputcsv($output, ['ID', 'Nom complet', 'E-mail', 'Téléphone / WhatsApp', 'Arrivée', 'Départ', 'Voyageurs', 'Message', 'Consentement le', 'Statut', 'Note interne', 'Demande reçue le'], ',', '"', '');
             foreach ($exportRows as $row) {
                 fputcsv($output, [
                     (int) $row['id'],
                     admin_csv_safe((string) $row['full_name']),
                     admin_csv_safe((string) $row['email']),
+                    admin_csv_safe((string) ($row['phone'] ?? '')),
                     (string) $row['arrival_date'],
                     (string) $row['departure_date'],
                     (int) $row['guests'],
@@ -300,9 +301,11 @@ if (admin_is_signed_in() && $databaseReady) {
                 $createdStamp = gmdate('Ymd\THis\Z', strtotime((string) $ev['created_at']));
                 $uid = 'el-olivar-' . (int) $ev['id'] . '-' . $arrClean . '@elolivarzarqa.com';
                 $summary = 'Séjour El Olivar : ' . addcslashes((string) $ev['full_name'], ",;\\") . ' (' . (int) $ev['guests'] . ' pers.)';
+                $evPhone = trim((string) ($ev['phone'] ?? ''));
                 $desc = "Réservation El Olivar Zarqa\\n"
                     . "Client : " . addcslashes((string) $ev['full_name'], ",;\\") . "\\n"
                     . "Email : " . addcslashes((string) $ev['email'], ",;\\") . "\\n"
+                    . ($evPhone !== '' ? "Tél / WhatsApp : " . addcslashes($evPhone, ",;\\") . "\\n" : "")
                     . "Personnes : " . (int) $ev['guests'] . "\\n"
                     . "Arrivée : " . (string) $ev['arrival_date'] . "\\n"
                     . "Départ : " . (string) $ev['departure_date'] . "\\n"
@@ -333,7 +336,7 @@ if (admin_is_signed_in() && $databaseReady) {
         $rangeStart = $totalRequests > 0 ? $offset + 1 : 0;
         $rangeEnd = min($offset + $pageSize, $totalRequests);
         $statement = $pdo->prepare(
-            'SELECT id, full_name, email, arrival_date, departure_date, guests, message, status, admin_notes, created_at
+            'SELECT id, full_name, email, phone, arrival_date, departure_date, guests, message, status, admin_notes, created_at
              FROM stay_inquiries ORDER BY created_at DESC, id DESC LIMIT :limit OFFSET :offset'
         );
         $statement->bindValue(':limit', $pageSize, PDO::PARAM_INT);
@@ -589,6 +592,7 @@ $csrfToken = admin_csrf_token();
                             $searchBlob = mb_strtolower(implode(' ', [
                                 (string) $request['full_name'],
                                 (string) $request['email'],
+                                (string) ($request['phone'] ?? ''),
                                 (string) $request['arrival_date'],
                                 (string) $request['departure_date'],
                                 (string) ($request['message'] ?? ''),
@@ -610,7 +614,18 @@ $csrfToken = admin_csrf_token();
                             </td>
                             <td class="admin-table__date"><?= admin_h((string) $request['created_at']) ?></td>
                             <td><strong><?= admin_h((string) $request['full_name']) ?></strong></td>
-                            <td><a href="mailto:<?= admin_h((string) $request['email']) ?>"><?= admin_h((string) $request['email']) ?></a></td>
+                            <td>
+                                <div><a href="mailto:<?= admin_h((string) $request['email']) ?>" style="font-weight: 500;"><?= admin_h((string) $request['email']) ?></a></div>
+                                <?php if (!empty($request['phone'])): ?>
+                                    <?php $waDigits = preg_replace('/\D/', '', (string) $request['phone']); ?>
+                                    <div style="margin-top: 5px; font-size: 12.5px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap;">
+                                        <a href="tel:<?= admin_h((string) $request['phone']) ?>" style="color: var(--admin-muted); font-weight: 500;" title="Appeler">📞 <?= admin_h((string) $request['phone']) ?></a>
+                                        <a href="https://wa.me/<?= admin_h($waDigits) ?>" target="_blank" rel="noopener noreferrer" title="Discuter sur WhatsApp" style="display: inline-flex; align-items: center; gap: 4px; background: #25d366; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-decoration: none !important;">
+                                            <img src="../assets/whatsapp.svg" alt="" width="11" height="11" style="filter: brightness(0) invert(1);"> WhatsApp
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
+                            </td>
                             <td><?= admin_h((string) $request['arrival_date']) ?><span class="admin-date-separator">→</span><?= admin_h((string) $request['departure_date']) ?></td>
                             <td><?= (int) $request['guests'] ?></td>
                             <td class="admin-table__message"><?= admin_h((string) ($request['message'] ?? '')) ?: '<span class="admin-muted">—</span>' ?></td>
