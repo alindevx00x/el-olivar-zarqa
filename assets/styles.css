@@ -111,7 +111,7 @@ h2 { margin: 0; font-family: var(--serif); font-size: clamp(42px, 5.2vw, 65px); 
 .section-heading { max-width: 1200px; margin: 0 auto 43px; display: flex; justify-content: space-between; align-items: end; gap: 40px; }
 .section-heading h2 em { color: var(--olive); font-weight: 400; }
 .section-heading > p { max-width: 330px; margin: 0 3% 9px 0; color: var(--muted); font-size: 16px; line-height: 1.85; }
-.gallery-grid { max-width: 1200px; height: 720px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap: 12px; }
+.gallery-grid { max-width: 1200px; height: auto; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 240px; gap: 12px; }
 .gallery-tile { position: relative; min-width: 0; min-height: 0; padding: 0; overflow: hidden; border: 0; background: #d7d8cc; cursor: zoom-in; text-align: left; }
 .gallery-tile--large { grid-column: span 2; grid-row: span 2; }
 .gallery-tile--wide { grid-column: span 2; }
@@ -335,7 +335,7 @@ h2 { margin: 0; font-family: var(--serif); font-size: clamp(42px, 5.2vw, 65px); 
     .gallery-section { padding-top: 84px; padding-bottom: 87px; }
     .section-heading { align-items: flex-start; flex-direction: column; gap: 14px; margin-bottom: 27px; }
     .section-heading > p { max-width: 420px; margin: 0; }
-    .gallery-grid { height: auto; grid-template-columns: 1fr 1fr; grid-template-rows: 290px 180px 180px 180px; gap: 8px; }
+    .gallery-grid { height: auto; grid-template-columns: 1fr 1fr; grid-auto-rows: 180px; gap: 8px; }
     .gallery-tile--large { grid-column: span 2; grid-row: span 1; }
     .gallery-tile--wide { grid-column: span 2; }
     .gallery-tile__label { right: 34px; bottom: 12px; left: 12px; font-size: 11px; }
@@ -392,7 +392,7 @@ h2 { margin: 0; font-family: var(--serif); font-size: clamp(42px, 5.2vw, 65px); 
     .intro__visual { min-height: 330px; }
     .intro__photo--main { height: 300px; }
     .intro__photo-small { height: 133px; }
-    .gallery-grid { grid-template-rows: 245px 150px 150px 150px; }
+    .gallery-grid { grid-auto-rows: 150px; }
     .comfort-grid { gap: 0 16px; }
     .comfort-card { min-height: 232px; }
     .surroundings__visual, .surroundings__visual > img { min-height: 330px; height: 330px; }

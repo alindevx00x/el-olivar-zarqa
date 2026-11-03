@@ -372,6 +372,7 @@ $canonicalUrl = $appRootUrl . '/';
                 <p><?= h(t('gallery.description')) ?></p>
             </div>
             <div class="gallery-grid" aria-label="<?= h(t('gallery.aria')) ?>">
+                <!-- 1. Maison & paysage (Grande) -->
                 <button class="gallery-tile gallery-tile--large" type="button" data-full="assets/images/exterior-mountain.jpg" data-alt="<?= h(t('alt.house')) ?>">
                     <picture>
                         <source srcset="assets/images/exterior-mountain.webp" type="image/webp">
@@ -379,6 +380,8 @@ $canonicalUrl = $appRootUrl . '/';
                     </picture>
                     <span class="gallery-tile__label"><?= h(t('gallery.house')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
                 </button>
+
+                <!-- 2. Salon vue jardin -->
                 <button class="gallery-tile" type="button" data-full="assets/images/living-room-booking.jpg" data-alt="<?= h(t('alt.living')) ?>">
                     <picture>
                         <source srcset="assets/images/living-room-booking.webp" type="image/webp">
@@ -386,6 +389,8 @@ $canonicalUrl = $appRootUrl . '/';
                     </picture>
                     <span class="gallery-tile__label"><?= h(t('gallery.living')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
                 </button>
+
+                <!-- 3. Première chambre -->
                 <button class="gallery-tile" type="button" data-full="assets/images/bedroom.jpg" data-alt="<?= h(t('alt.bedroom')) ?>">
                     <picture>
                         <source srcset="assets/images/bedroom.webp" type="image/webp">
@@ -393,6 +398,35 @@ $canonicalUrl = $appRootUrl . '/';
                     </picture>
                     <span class="gallery-tile__label"><?= h(t('gallery.bedroom')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
                 </button>
+
+                <!-- 4. Deuxième chambre (lits jumeaux - Airbnb) -->
+                <button class="gallery-tile" type="button" data-full="assets/images/bedroom-twin.jpg" data-alt="<?= h(t('alt.bedroom_twin')) ?>">
+                    <picture>
+                        <source srcset="assets/images/bedroom-twin.webp" type="image/webp">
+                        <img src="assets/images/bedroom-twin.jpg" alt="<?= h(t('alt.bedroom_twin')) ?>" loading="lazy">
+                    </picture>
+                    <span class="gallery-tile__label"><?= h(t('gallery.bedroom_twin')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                </button>
+
+                <!-- 5. Salle de bain complète (Airbnb) -->
+                <button class="gallery-tile" type="button" data-full="assets/images/bathroom.jpg" data-alt="<?= h(t('alt.bathroom')) ?>">
+                    <picture>
+                        <source srcset="assets/images/bathroom.webp" type="image/webp">
+                        <img src="assets/images/bathroom.jpg" alt="<?= h(t('alt.bathroom')) ?>" loading="lazy">
+                    </picture>
+                    <span class="gallery-tile__label"><?= h(t('gallery.bathroom')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                </button>
+
+                <!-- 6. Pergola & terrasse extérieure (Large - Airbnb) -->
+                <button class="gallery-tile gallery-tile--wide" type="button" data-full="assets/images/terrace-pergola.jpg" data-alt="<?= h(t('alt.terrace_pergola')) ?>">
+                    <picture>
+                        <source srcset="assets/images/terrace-pergola.webp" type="image/webp">
+                        <img src="assets/images/terrace-pergola.jpg" alt="<?= h(t('alt.terrace_pergola')) ?>" loading="lazy">
+                    </picture>
+                    <span class="gallery-tile__label"><?= h(t('gallery.terrace_pergola')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                </button>
+
+                <!-- 7. Coin repas intérieur -->
                 <button class="gallery-tile" type="button" data-full="assets/images/dining-area.jpg" data-alt="<?= h(t('alt.dining')) ?>">
                     <picture>
                         <source srcset="assets/images/dining-area.webp" type="image/webp">
@@ -400,20 +434,8 @@ $canonicalUrl = $appRootUrl . '/';
                     </picture>
                     <span class="gallery-tile__label"><?= h(t('gallery.dining')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
                 </button>
-                <button class="gallery-tile" type="button" data-full="assets/images/terrace-evening.jpg" data-alt="<?= h(t('alt.evening')) ?>">
-                    <picture>
-                        <source srcset="assets/images/terrace-evening.webp" type="image/webp">
-                        <img src="assets/images/terrace-evening.jpg" alt="<?= h(t('alt.evening')) ?>" loading="lazy">
-                    </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.evening')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
-                </button>
-                <button class="gallery-tile gallery-tile--wide" type="button" data-full="assets/images/mountain-view.jpg" data-alt="<?= h(t('alt.mountain')) ?>">
-                    <picture>
-                        <source srcset="assets/images/mountain-view.webp" type="image/webp">
-                        <img src="assets/images/mountain-view.jpg" alt="<?= h(t('alt.mountain')) ?>" loading="lazy">
-                    </picture>
-                    <span class="gallery-tile__label"><?= h(t('gallery.mountain')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
-                </button>
+
+                <!-- 8. Cuisine équipée -->
                 <button class="gallery-tile" type="button" data-full="assets/images/kitchen.jpg" data-alt="<?= h(t('alt.kitchen')) ?>">
                     <picture>
                         <source srcset="assets/images/kitchen.webp" type="image/webp">
@@ -421,12 +443,77 @@ $canonicalUrl = $appRootUrl . '/';
                     </picture>
                     <span class="gallery-tile__label"><?= h(t('gallery.kitchen')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
                 </button>
+
+                <!-- 9. Grand salon marocain (Airbnb) -->
+                <button class="gallery-tile" type="button" data-full="assets/images/traditional-salon.jpg" data-alt="<?= h(t('alt.traditional_salon')) ?>">
+                    <picture>
+                        <source srcset="assets/images/traditional-salon.webp" type="image/webp">
+                        <img src="assets/images/traditional-salon.jpg" alt="<?= h(t('alt.traditional_salon')) ?>" loading="lazy">
+                    </picture>
+                    <span class="gallery-tile__label"><?= h(t('gallery.traditional_salon')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                </button>
+
+                <!-- 10. Patio & jardin arboré (Airbnb) -->
+                <button class="gallery-tile" type="button" data-full="assets/images/patio-garden.jpg" data-alt="<?= h(t('alt.patio_garden')) ?>">
+                    <picture>
+                        <source srcset="assets/images/patio-garden.webp" type="image/webp">
+                        <img src="assets/images/patio-garden.jpg" alt="<?= h(t('alt.patio_garden')) ?>" loading="lazy">
+                    </picture>
+                    <span class="gallery-tile__label"><?= h(t('gallery.patio_garden')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                </button>
+
+                <!-- 11. Espace repas extérieur (Large - Airbnb) -->
+                <button class="gallery-tile gallery-tile--wide" type="button" data-full="assets/images/outdoor-dining.jpg" data-alt="<?= h(t('alt.outdoor_dining')) ?>">
+                    <picture>
+                        <source srcset="assets/images/outdoor-dining.webp" type="image/webp">
+                        <img src="assets/images/outdoor-dining.jpg" alt="<?= h(t('alt.outdoor_dining')) ?>" loading="lazy">
+                    </picture>
+                    <span class="gallery-tile__label"><?= h(t('gallery.outdoor_dining')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                </button>
+
+                <!-- 12. Façade ensoleillée (Airbnb) -->
+                <button class="gallery-tile" type="button" data-full="assets/images/villa-facade.jpg" data-alt="<?= h(t('alt.villa_facade')) ?>">
+                    <picture>
+                        <source srcset="assets/images/villa-facade.webp" type="image/webp">
+                        <img src="assets/images/villa-facade.jpg" alt="<?= h(t('alt.villa_facade')) ?>" loading="lazy">
+                    </picture>
+                    <span class="gallery-tile__label"><?= h(t('gallery.villa_facade')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                </button>
+
+                <!-- 13. Terrasse ensoleillée -->
                 <button class="gallery-tile" type="button" data-full="assets/images/terrace-sunlight.jpg" data-alt="<?= h(t('alt.terrace')) ?>">
                     <picture>
                         <source srcset="assets/images/terrace-sunlight.webp" type="image/webp">
                         <img src="assets/images/terrace-sunlight.jpg" alt="<?= h(t('alt.terrace')) ?>" loading="lazy">
                     </picture>
                     <span class="gallery-tile__label"><?= h(t('gallery.terrace')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                </button>
+
+                <!-- 14. Panorama spectaculaire vallée (Grande - Airbnb) -->
+                <button class="gallery-tile gallery-tile--large" type="button" data-full="assets/images/panoramic-valley.jpg" data-alt="<?= h(t('alt.panoramic_valley')) ?>">
+                    <picture>
+                        <source srcset="assets/images/panoramic-valley.webp" type="image/webp">
+                        <img src="assets/images/panoramic-valley.jpg" alt="<?= h(t('alt.panoramic_valley')) ?>" loading="lazy">
+                    </picture>
+                    <span class="gallery-tile__label"><?= h(t('gallery.panoramic_valley')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                </button>
+
+                <!-- 15. Soirée en terrasse au crépuscule -->
+                <button class="gallery-tile" type="button" data-full="assets/images/terrace-evening.jpg" data-alt="<?= h(t('alt.evening')) ?>">
+                    <picture>
+                        <source srcset="assets/images/terrace-evening.webp" type="image/webp">
+                        <img src="assets/images/terrace-evening.jpg" alt="<?= h(t('alt.evening')) ?>" loading="lazy">
+                    </picture>
+                    <span class="gallery-tile__label"><?= h(t('gallery.evening')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
+                </button>
+
+                <!-- 16. Crêtes et montagnes -->
+                <button class="gallery-tile" type="button" data-full="assets/images/mountain-view.jpg" data-alt="<?= h(t('alt.mountain')) ?>">
+                    <picture>
+                        <source srcset="assets/images/mountain-view.webp" type="image/webp">
+                        <img src="assets/images/mountain-view.jpg" alt="<?= h(t('alt.mountain')) ?>" loading="lazy">
+                    </picture>
+                    <span class="gallery-tile__label"><?= h(t('gallery.mountain')) ?></span><span class="gallery-tile__zoom" aria-hidden="true">↗</span>
                 </button>
             </div>
         </section>
