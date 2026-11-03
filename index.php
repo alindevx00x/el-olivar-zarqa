@@ -183,12 +183,16 @@ $instagramUrl = 'https://www.instagram.com/el_olivar_zarqa/';
 $googleMapsUrl = 'https://maps.app.goo.gl/K4xCdhYZC3KkJu1q8';
 
 $whatsappNumber = '212600000000';
+$whatsappEnabled = true;
 try {
     $pdoSettings = database_connection();
-    $stmtSettings = $pdoSettings->query("SELECT setting_value FROM site_settings WHERE setting_key = 'whatsapp_number' LIMIT 1");
-    $dbWa = $stmtSettings ? $stmtSettings->fetchColumn() : false;
-    if ($dbWa !== false && trim((string) $dbWa) !== '') {
-        $whatsappNumber = trim((string) $dbWa);
+    $stmtSettings = $pdoSettings->query("SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN ('whatsapp_number', 'whatsapp_enabled')");
+    $settingsList = $stmtSettings ? $stmtSettings->fetchAll(PDO::FETCH_KEY_PAIR) : [];
+    if (isset($settingsList['whatsapp_number']) && trim((string) $settingsList['whatsapp_number']) !== '') {
+        $whatsappNumber = trim((string) $settingsList['whatsapp_number']);
+    }
+    if (isset($settingsList['whatsapp_enabled'])) {
+        $whatsappEnabled = ($settingsList['whatsapp_enabled'] === '1' || $settingsList['whatsapp_enabled'] === 'true' || $settingsList['whatsapp_enabled'] === 1);
     }
 } catch (Throwable) {
     // Fallback gracieux si la base ou la table n'est pas encore accessible
@@ -627,12 +631,14 @@ $canonicalUrl = $appRootUrl . '/';
         <div class="footer-bottom page-width"><span><?= h(str_replace('{year}', date('Y'), t('footer.copyright'))) ?></span><a class="footer-location-link" href="<?= h($googleMapsUrl) ?>" target="_blank" rel="noopener noreferrer"><?= h(t('footer.location')) ?> ↗</a><span><?= h(t('footer.made')) ?> <i aria-hidden="true">✳</i></span><a class="developer-credit" href="https://alindevx00x.me" target="_blank" rel="noopener noreferrer"><?= h(t('footer.developer')) ?> ↗</a></div>
     </footer>
 
+    <?php if ($whatsappEnabled): ?>
     <aside class="whatsapp-float-wrapper">
         <a class="whatsapp-float" href="<?= h($whatsappUrl) ?>" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" data-base-url="https://wa.me/<?= preg_replace('/\D/', '', $whatsappNumber) ?>" data-default-msg="<?= h($whatsappMessage) ?>" title="<?= $language === 'ar' ? 'تواصل معنا مباشرة عبر واتساب' : 'Discuter sur WhatsApp' ?>">
             <img src="assets/whatsapp.svg" alt="WhatsApp" width="28" height="28">
             <span class="whatsapp-float__label"><?= $language === 'ar' ? 'تواصل عبر واتساب' : 'Discuter sur WhatsApp' ?></span>
         </a>
     </aside>
+    <?php endif; ?>
 
     <dialog class="lightbox" aria-label="<?= h(t('gallery.lightbox')) ?>">
         <button class="lightbox__close" type="button" aria-label="<?= h(t('gallery.close')) ?>">×</button>

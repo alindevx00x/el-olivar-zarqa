@@ -39,5 +39,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO site_settings (setting_key, setting_value)
-VALUES ('whatsapp_number', '212600000000')
+VALUES 
+    ('whatsapp_number', '212600000000'),
+    ('whatsapp_enabled', '1')
 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);

@@ -148,6 +148,7 @@ if (admin_is_signed_in() && $databaseReady && $_SERVER['REQUEST_METHOD'] === 'PO
         if ($adminAction === 'update_whatsapp_number') {
             $rawPhone = trim((string) ($_POST['whatsapp_number'] ?? ''));
             $digitsOnly = preg_replace('/\D/', '', $rawPhone);
+            $isEnabled = isset($_POST['whatsapp_enabled']) && ($_POST['whatsapp_enabled'] === '1' || $_POST['whatsapp_enabled'] === 'on') ? '1' : '0';
 
             if (strlen($digitsOnly) < 8 || strlen($digitsOnly) > 16) {
                 echo json_encode(['success' => false, 'message' => 'Le numéro doit comporter entre 8 et 16 chiffres avec l’indicatif pays (ex: 212600000000).']);
@@ -170,10 +171,20 @@ if (admin_is_signed_in() && $databaseReady && $_SERVER['REQUEST_METHOD'] === 'PO
                 );
                 $stmt->execute([':val' => $digitsOnly]);
 
+                $stmtEnabled = $pdo->prepare(
+                    'INSERT INTO site_settings (setting_key, setting_value)
+                     VALUES (\'whatsapp_enabled\', :val)
+                     ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)'
+                );
+                $stmtEnabled->execute([':val' => $isEnabled]);
+
                 echo json_encode([
                     'success' => true,
                     'whatsapp_number' => $digitsOnly,
-                    'message' => 'Le numéro WhatsApp de contact a bien été enregistré !',
+                    'whatsapp_enabled' => $isEnabled === '1',
+                    'message' => $isEnabled === '1'
+                        ? 'Paramètres WhatsApp enregistrés (Bouton actif sur le site) !'
+                        : 'Paramètres WhatsApp enregistrés (Bouton masqué sur tout le site).',
                 ]);
             } catch (Throwable $e) {
                 http_response_code(500);
@@ -331,11 +342,15 @@ if (admin_is_signed_in() && $databaseReady) {
         $requests = $statement->fetchAll();
 
         $currentWaNumber = '212600000000';
+        $currentWaEnabled = true;
         try {
-            $stmtWa = $pdo->query("SELECT setting_value FROM site_settings WHERE setting_key = 'whatsapp_number' LIMIT 1");
-            $valWa = $stmtWa ? $stmtWa->fetchColumn() : false;
-            if ($valWa !== false && trim((string) $valWa) !== '') {
-                $currentWaNumber = trim((string) $valWa);
+            $stmtSettings = $pdo->query("SELECT setting_key, setting_value FROM site_settings WHERE setting_key IN ('whatsapp_number', 'whatsapp_enabled')");
+            $settingsList = $stmtSettings ? $stmtSettings->fetchAll(PDO::FETCH_KEY_PAIR) : [];
+            if (isset($settingsList['whatsapp_number']) && trim((string) $settingsList['whatsapp_number']) !== '') {
+                $currentWaNumber = trim((string) $settingsList['whatsapp_number']);
+            }
+            if (isset($settingsList['whatsapp_enabled'])) {
+                $currentWaEnabled = ($settingsList['whatsapp_enabled'] === '1' || $settingsList['whatsapp_enabled'] === 'true' || $settingsList['whatsapp_enabled'] === 1);
             }
         } catch (Throwable) {
         }
@@ -647,6 +662,22 @@ $csrfToken = admin_csrf_token();
                 <input type="hidden" name="csrf_token" value="<?= admin_h($csrfToken) ?>">
                 <input type="hidden" name="admin_action" value="update_whatsapp_number">
                 <div id="wa-form-feedback" class="admin-alert" style="display: none;"></div>
+
+                <!-- Option Afficher / Masquer sur tout le site -->
+                <div class="admin-toggle-box">
+                    <div class="admin-toggle-info">
+                        <strong>Visibilité sur le site public</strong>
+                        <small>Affiche ou masque le bouton WhatsApp flottant pour tous les visiteurs</small>
+                        <span id="wa-status-badge" class="admin-badge-status <?= ($currentWaEnabled ?? true) ? 'admin-badge-status--on' : 'admin-badge-status--off' ?>">
+                            <?= ($currentWaEnabled ?? true) ? '● Actuellement affiché' : '○ Actuellement masqué' ?>
+                        </span>
+                    </div>
+                    <label class="admin-switch" title="Activer / Désactiver">
+                        <input type="checkbox" id="wa_enabled_switch" name="whatsapp_enabled" value="1" <?= ($currentWaEnabled ?? true) ? 'checked' : '' ?>>
+                        <span class="admin-slider"></span>
+                    </label>
+                </div>
+
                 <label for="wa_phone_number">Numéro WhatsApp officiel (avec indicatif pays)</label>
                 <input type="text" id="wa_phone_number" name="whatsapp_number" value="<?= admin_h($currentWaNumber ?? '212600000000') ?>" placeholder="Ex: 212600000000" required>
                 <p class="admin-modal__notice" style="margin-top: 8px;">
@@ -657,7 +688,7 @@ $csrfToken = admin_csrf_token();
                     Aperçu du lien direct : <a id="wa-preview-link" href="https://wa.me/<?= preg_replace('/\D/', '', $currentWaNumber ?? '212600000000') ?>" target="_blank" rel="noopener noreferrer" style="color: #1a73e8; font-weight: 600; text-decoration: underline;">Tester la discussion WhatsApp ↗</a>
                 </div>
                 <div class="admin-modal__options" style="margin-top: 15px;">
-                    <button type="submit" class="admin-button">Enregistrer</button>
+                    <button type="submit" class="admin-button">Enregistrer les paramètres</button>
                     <button type="button" id="whatsapp-modal-cancel" class="admin-button admin-button--secondary">Annuler</button>
                 </div>
             </form>
@@ -1044,6 +1075,23 @@ $csrfToken = admin_csrf_token();
         const feedbackWa = document.getElementById('wa-form-feedback');
         const waInput = document.getElementById('wa_phone_number');
         const waPreview = document.getElementById('wa-preview-link');
+        const waSwitch = document.getElementById('wa_enabled_switch');
+        const waStatusBadge = document.getElementById('wa-status-badge');
+
+        const updateWaStatusBadge = () => {
+            if (!waStatusBadge || !waSwitch) return;
+            if (waSwitch.checked) {
+                waStatusBadge.className = 'admin-badge-status admin-badge-status--on';
+                waStatusBadge.textContent = '● Actuellement affiché';
+            } else {
+                waStatusBadge.className = 'admin-badge-status admin-badge-status--off';
+                waStatusBadge.textContent = '○ Actuellement masqué';
+            }
+        };
+
+        if (waSwitch) {
+            waSwitch.addEventListener('change', updateWaStatusBadge);
+        }
 
         if (btnWaModal && modalWa) {
             btnWaModal.addEventListener('click', () => {
@@ -1087,6 +1135,10 @@ $csrfToken = admin_csrf_token();
                             if (waInput && data.whatsapp_number) {
                                 waInput.value = data.whatsapp_number;
                                 if (waPreview) waPreview.href = `https://wa.me/${data.whatsapp_number}`;
+                            }
+                            if (waSwitch && typeof data.whatsapp_enabled === 'boolean') {
+                                waSwitch.checked = data.whatsapp_enabled;
+                                updateWaStatusBadge();
                             }
                             setTimeout(() => { modalWa.close(); }, 1800);
                         } else {
