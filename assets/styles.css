@@ -187,7 +187,7 @@ h2 { margin: 0; font-family: var(--serif); font-size: clamp(42px, 5.2vw, 65px); 
 .form-notice--success { border-left: 3px solid var(--olive); background: #edf2e9; color: #354533; }
 .form-notice--error { border-left: 3px solid #ac6848; background: #f8eee8; color: #6f3d2c; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-.form-row--dates { grid-template-columns: 1fr 1fr .8fr; }
+.form-row--dates { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .field { min-width: 0; margin-bottom: 18px; display: flex; flex-direction: column; gap: 6px; }
 .field label { color: #444b42; font-size: 13px; font-weight: 600; }
 .field label span { color: #8a8e86; font-weight: 400; }
@@ -363,8 +363,7 @@ h2 { margin: 0; font-family: var(--serif); font-size: clamp(42px, 5.2vw, 65px); 
     .contact__intro { max-width: 500px; }
     .inquiry-form { padding: 27px 22px 24px; }
     .form-row { gap: 12px; }
-    .form-row--dates { grid-template-columns: 1fr 1fr; }
-    .form-row--dates .field:last-child { grid-column: span 2; }
+    .form-row--dates { grid-template-columns: 1fr 1fr; gap: 12px; }
     .faq { grid-template-columns: 1fr; gap: 30px; padding-top: 80px; padding-bottom: 88px; }
     .faq__heading h2 { font-size: 43px; }
     .faq-list summary { min-height: 65px; font-size: 13px; }

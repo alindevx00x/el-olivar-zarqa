@@ -486,6 +486,29 @@ $csrfToken = admin_csrf_token();
     .admin-switch input:checked + .admin-slider { background-color: #4e6149; }
     .admin-switch input:focus-visible + .admin-slider { box-shadow: 0 0 0 3px rgba(78,97,73,.25); }
     .admin-switch input:checked + .admin-slider:before { transform: translateX(20px); }
+
+    /* Submission Detail Modal Styles */
+    .admin-modal--wide { max-width: 680px; width: min(100% - 32px, 680px); }
+    .admin-table tbody tr { cursor: pointer; transition: background .15s ease; }
+    .admin-table tbody tr:hover { background: #f7f9f3 !important; }
+    .admin-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid #dfe1d8; }
+    @media (max-width: 580px) { .admin-detail-grid { grid-template-columns: 1fr; gap: 12px; } }
+    .admin-detail-item { display: flex; flex-direction: column; gap: 4px; }
+    .admin-detail-label { font-size: 11.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #71786e; }
+    .admin-detail-val { font-size: 14.5px; color: #293129; }
+    .admin-detail-link { font-size: 14px; font-weight: 600; color: #4e6149; text-decoration: underline; text-underline-offset: 2px; }
+    .admin-badge-nights { margin-left: 6px; display: inline-block; padding: 1px 7px; border-radius: 10px; background: #eef2eb; color: #3b5239; font-size: 11px; font-weight: 700; }
+    .admin-badge-wa { display: inline-flex; align-items: center; gap: 4px; background: #25d366; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; text-decoration: none !important; }
+    .admin-detail-section { margin-bottom: 18px; }
+    .admin-detail-message { margin-top: 6px; padding: 13px 15px; background: #fbfaf6; border: 1px solid #dfe1d8; border-left: 3px solid #4e6149; border-radius: 4px; font-size: 13.5px; line-height: 1.6; color: #293129; white-space: pre-wrap; word-break: break-word; max-height: 180px; overflow-y: auto; }
+    .admin-detail-textarea { width: 100%; margin-top: 6px; padding: 10px 12px; border: 1px solid #d6d9d0; border-radius: 4px; background: white; font: inherit; font-size: 13px; line-height: 1.5; resize: vertical; min-height: 60px; box-sizing: border-box; }
+    .admin-detail-textarea:focus { border-color: #4e6149; outline: none; box-shadow: 0 0 0 2px rgba(78,97,73,.15); }
+    .admin-detail-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 22px; padding-top: 18px; border-top: 1px solid #dfe1d8; }
+    .admin-detail-actions__left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .admin-button--wa { background: #25d366; color: white; border: 1px solid #1eb855; }
+    .admin-button--wa:hover { background: #1eb855; color: white; }
+    .admin-action-btn--view { color: #4e6149; border-color: #d6dcd2; background: #fafaf6; cursor: pointer; }
+    .admin-action-btn--view:hover { background: #eef2eb; border-color: #4e6149; color: #26362c; }
     </style>
 </head>
 <body class="admin-page">
@@ -589,6 +612,9 @@ $csrfToken = admin_csrf_token();
                         <?php
                             $status = in_array($request['status'], ['new', 'contacted', 'closed'], true) ? (string) $request['status'] : 'new';
                             $singleGcalUrl = admin_google_calendar_url($request);
+                            $arrTs = strtotime((string) $request['arrival_date']);
+                            $depTs = strtotime((string) $request['departure_date']);
+                            $nights = ($arrTs && $depTs && $depTs > $arrTs) ? (int) round(($depTs - $arrTs) / 86400) : 1;
                             $searchBlob = mb_strtolower(implode(' ', [
                                 (string) $request['full_name'],
                                 (string) $request['email'],
@@ -599,7 +625,22 @@ $csrfToken = admin_csrf_token();
                                 (string) ($request['admin_notes'] ?? '')
                             ]));
                         ?>
-                        <tr id="row-<?= (int) $request['id'] ?>" data-id="<?= (int) $request['id'] ?>" data-status="<?= admin_h($status) ?>" data-search-text="<?= admin_h($searchBlob) ?>">
+                        <tr id="row-<?= (int) $request['id'] ?>"
+                            class="admin-table__row admin-table__row--clickable"
+                            data-id="<?= (int) $request['id'] ?>"
+                            data-name="<?= admin_h((string) $request['full_name']) ?>"
+                            data-email="<?= admin_h((string) $request['email']) ?>"
+                            data-phone="<?= admin_h((string) ($request['phone'] ?? '')) ?>"
+                            data-arrival="<?= admin_h((string) $request['arrival_date']) ?>"
+                            data-departure="<?= admin_h((string) $request['departure_date']) ?>"
+                            data-nights="<?= $nights ?>"
+                            data-guests="<?= (int) $request['guests'] ?>"
+                            data-message="<?= admin_h((string) ($request['message'] ?? '')) ?>"
+                            data-notes="<?= admin_h((string) ($request['admin_notes'] ?? '')) ?>"
+                            data-status="<?= admin_h($status) ?>"
+                            data-created="<?= admin_h((string) $request['created_at']) ?>"
+                            data-gcal-url="<?= admin_h($singleGcalUrl) ?>"
+                            data-search-text="<?= admin_h($searchBlob) ?>">
                             <td class="admin-table__col-check">
                                 <input type="checkbox"
                                        class="admin-checkbox admin-row-check"
@@ -613,7 +654,7 @@ $csrfToken = admin_csrf_token();
                                        aria-label="Sélectionner la demande de <?= admin_h((string) $request['full_name']) ?>">
                             </td>
                             <td class="admin-table__date"><?= admin_h((string) $request['created_at']) ?></td>
-                            <td><strong><?= admin_h((string) $request['full_name']) ?></strong></td>
+                            <td><strong style="color: var(--admin-olive-dark);"><?= admin_h((string) $request['full_name']) ?></strong></td>
                             <td>
                                 <div><a href="mailto:<?= admin_h((string) $request['email']) ?>" style="font-weight: 500;"><?= admin_h((string) $request['email']) ?></a></div>
                                 <?php if (!empty($request['phone'])): ?>
@@ -626,7 +667,7 @@ $csrfToken = admin_csrf_token();
                                     </div>
                                 <?php endif; ?>
                             </td>
-                            <td><?= admin_h((string) $request['arrival_date']) ?><span class="admin-date-separator">→</span><?= admin_h((string) $request['departure_date']) ?></td>
+                            <td><?= admin_h((string) $request['arrival_date']) ?><span class="admin-date-separator">→</span><?= admin_h((string) $request['departure_date']) ?> <small class="admin-badge-nights"><?= $nights ?>n</small></td>
                             <td><?= (int) $request['guests'] ?></td>
                             <td class="admin-table__message"><?= admin_h((string) ($request['message'] ?? '')) ?: '<span class="admin-muted">—</span>' ?></td>
                             <td>
@@ -649,6 +690,9 @@ $csrfToken = admin_csrf_token();
                             </td>
                             <td class="admin-table__col-actions">
                                 <div class="admin-row-actions">
+                                    <button type="button" class="admin-action-btn admin-action-btn--view" data-id="<?= (int) $request['id'] ?>" title="Afficher tous les détails">
+                                        <span>👁️</span> <span>Détails</span>
+                                    </button>
                                     <a class="admin-action-btn" href="<?= admin_h($singleGcalUrl) ?>" target="_blank" rel="noopener noreferrer" title="Ajouter cette demande à Google Calendar">
                                         <img src="../assets/google-calendar.svg" alt="" width="14" height="14">
                                         <span>GCal</span>
@@ -708,6 +752,102 @@ $csrfToken = admin_csrf_token();
         </div>
         <p class="admin-dashboard__note">Les demandes sont conservées dans la base MySQL du site. L’export CSV contient toutes les demandes avec notes internes.</p>
     </main>
+
+    <!-- Modal Détails de la demande -->
+    <dialog id="admin-detail-modal" class="admin-modal admin-modal--wide" aria-labelledby="detail-modal-title">
+        <div class="admin-modal__card">
+            <div class="admin-modal__header">
+                <div class="admin-modal__title-group">
+                    <span style="font-size: 24px; line-height: 1;">📋</span>
+                    <div>
+                        <h2 id="detail-modal-title">Demande de réservation #<span id="detail-id">—</span></h2>
+                        <p class="admin-modal__subtitle" id="detail-modal-subtitle">Reçue le —</p>
+                    </div>
+                </div>
+                <button type="button" class="admin-modal__close" id="detail-modal-close" aria-label="Fermer">×</button>
+            </div>
+            <div class="admin-modal__body">
+                <!-- Grille d'informations -->
+                <div class="admin-detail-grid">
+                    <div class="admin-detail-item">
+                        <span class="admin-detail-label">Voyageur</span>
+                        <strong id="detail-name" class="admin-detail-val" style="font-size: 16px;">—</strong>
+                    </div>
+                    <div class="admin-detail-item">
+                        <span class="admin-detail-label">Statut actuel (1-clic)</span>
+                        <div style="margin-top: 4px;">
+                            <select id="detail-status-select" class="admin-status-select" aria-label="Statut">
+                                <option value="new">● Nouvelle</option>
+                                <option value="contacted">● Contactée</option>
+                                <option value="closed">● Clôturée</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="admin-detail-item">
+                        <span class="admin-detail-label">Adresse E-mail</span>
+                        <div><a id="detail-email" href="" class="admin-detail-link">—</a></div>
+                    </div>
+                    <div class="admin-detail-item">
+                        <span class="admin-detail-label">Téléphone / WhatsApp</span>
+                        <div id="detail-phone-wrapper" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <a id="detail-phone" href="" class="admin-detail-link">—</a>
+                            <a id="detail-phone-wa" href="" target="_blank" rel="noopener noreferrer" class="admin-badge-wa">
+                                <img src="../assets/whatsapp.svg" alt="" width="12" height="12" style="filter: brightness(0) invert(1);"> WhatsApp
+                            </a>
+                        </div>
+                    </div>
+                    <div class="admin-detail-item">
+                        <span class="admin-detail-label">Période du séjour</span>
+                        <div class="admin-detail-val">
+                            <span id="detail-dates">—</span>
+                            <span id="detail-nights" class="admin-badge-nights">—</span>
+                        </div>
+                    </div>
+                    <div class="admin-detail-item">
+                        <span class="admin-detail-label">Nombre de personnes</span>
+                        <strong id="detail-guests" class="admin-detail-val">—</strong>
+                    </div>
+                </div>
+
+                <!-- Message du voyageur -->
+                <div class="admin-detail-section">
+                    <span class="admin-detail-label">Message transmis par le voyageur :</span>
+                    <div id="detail-message-box" class="admin-detail-message"></div>
+                </div>
+
+                <!-- Note interne privée -->
+                <div class="admin-detail-section">
+                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <label for="detail-note-input" class="admin-detail-label" style="margin: 0;">Note interne privée :</label>
+                        <span id="detail-note-saved" class="admin-note-saved" style="display: none;">✓ Enregistré</span>
+                    </div>
+                    <textarea id="detail-note-input" class="admin-detail-textarea" rows="2" placeholder="Ajouter une note interne (ex: Acompte 30% reçu, lit bébé demandé, arrivée tardive 21h)..."></textarea>
+                </div>
+
+                <!-- Barre d'actions -->
+                <div class="admin-detail-actions">
+                    <div class="admin-detail-actions__left">
+                        <a id="detail-action-wa" href="" target="_blank" rel="noopener noreferrer" class="admin-button admin-button--wa">
+                            <img src="../assets/whatsapp.svg" alt="" width="16" height="16" style="filter: brightness(0) invert(1);">
+                            <span>Discuter sur WhatsApp</span>
+                        </a>
+                        <a id="detail-action-email" href="" class="admin-button admin-button--secondary">
+                            <span>✉ Répondre par e-mail</span>
+                        </a>
+                        <a id="detail-action-gcal" href="" target="_blank" rel="noopener noreferrer" class="admin-button admin-button--gcal">
+                            <img src="../assets/google-calendar.svg" alt="" width="16" height="16">
+                            <span>Google Calendar</span>
+                        </a>
+                    </div>
+                    <div class="admin-detail-actions__right">
+                        <button type="button" id="detail-action-delete" class="admin-button admin-button--danger" title="Supprimer définitivement cette demande">
+                            <span>🗑️ Supprimer</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
 
     <!-- Modal Google Calendar -->
     <dialog id="admin-gcal-modal" class="admin-modal" aria-labelledby="gcal-modal-title">
@@ -1282,6 +1422,278 @@ $csrfToken = admin_csrf_token();
                     }
                 } finally {
                     if (submitBtn) submitBtn.disabled = false;
+                }
+            });
+        }
+
+        // Submission Detail Modal
+        const detailModal = document.getElementById('admin-detail-modal');
+        const detailModalClose = document.getElementById('detail-modal-close');
+        const detailId = document.getElementById('detail-id');
+        const detailSubtitle = document.getElementById('detail-modal-subtitle');
+        const detailName = document.getElementById('detail-name');
+        const detailStatusSelect = document.getElementById('detail-status-select');
+        const detailEmail = document.getElementById('detail-email');
+        const detailPhone = document.getElementById('detail-phone');
+        const detailPhoneWa = document.getElementById('detail-phone-wa');
+        const detailDates = document.getElementById('detail-dates');
+        const detailNights = document.getElementById('detail-nights');
+        const detailGuests = document.getElementById('detail-guests');
+        const detailMessageBox = document.getElementById('detail-message-box');
+        const detailNoteInput = document.getElementById('detail-note-input');
+        const detailNoteSaved = document.getElementById('detail-note-saved');
+        const detailActionWa = document.getElementById('detail-action-wa');
+        const detailActionEmail = document.getElementById('detail-action-email');
+        const detailActionGcal = document.getElementById('detail-action-gcal');
+        const detailActionDelete = document.getElementById('detail-action-delete');
+
+        let currentActiveRow = null;
+
+        const openDetailModal = (row) => {
+            if (!detailModal || !row) return;
+            currentActiveRow = row;
+            const id = row.dataset.id;
+            const name = row.dataset.name || '—';
+            const email = row.dataset.email || '';
+            const phone = row.dataset.phone || '';
+            const arrival = row.dataset.arrival || '';
+            const departure = row.dataset.departure || '';
+            const nights = row.dataset.nights || '1';
+            const guests = row.dataset.guests || '1';
+            const message = row.dataset.message || '';
+            const status = row.dataset.status || 'new';
+            const notes = row.dataset.notes || '';
+            const created = row.dataset.created || '';
+            const gcalUrl = row.dataset.gcalUrl || '#';
+
+            if (detailId) detailId.textContent = id;
+            if (detailSubtitle) detailSubtitle.textContent = `Reçue le ${created}`;
+            if (detailName) detailName.textContent = name;
+
+            // Status
+            if (detailStatusSelect) {
+                detailStatusSelect.value = status;
+                detailStatusSelect.className = `admin-status-select admin-status-select--${status}`;
+                detailStatusSelect.dataset.id = id;
+            }
+
+            // Email
+            if (detailEmail) {
+                detailEmail.textContent = email;
+                detailEmail.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent('Votre demande de séjour à El Olivar Zarqa')}`;
+            }
+            if (detailActionEmail) {
+                detailActionEmail.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent('Votre demande de séjour à El Olivar Zarqa')}`;
+            }
+
+            // Phone & WhatsApp
+            const waDigits = phone.replace(/\D/g, '');
+            if (phone) {
+                if (detailPhone) {
+                    detailPhone.textContent = `📞 ${phone}`;
+                    detailPhone.href = `tel:${phone}`;
+                    detailPhone.style.display = 'inline';
+                }
+                if (waDigits) {
+                    const preMsg = encodeURIComponent(`Bonjour ${name}, suite à votre demande de séjour à El Olivar du ${arrival} au ${departure}...`);
+                    const waUrl = `https://wa.me/${waDigits}?text=${preMsg}`;
+                    if (detailPhoneWa) {
+                        detailPhoneWa.href = waUrl;
+                        detailPhoneWa.style.display = 'inline-flex';
+                    }
+                    if (detailActionWa) {
+                        detailActionWa.href = waUrl;
+                        detailActionWa.style.display = 'inline-flex';
+                    }
+                } else {
+                    if (detailPhoneWa) detailPhoneWa.style.display = 'none';
+                    if (detailActionWa) detailActionWa.style.display = 'none';
+                }
+            } else {
+                if (detailPhone) {
+                    detailPhone.textContent = 'Non renseigné';
+                    detailPhone.removeAttribute('href');
+                }
+                if (detailPhoneWa) detailPhoneWa.style.display = 'none';
+                if (detailActionWa) detailActionWa.style.display = 'none';
+            }
+
+            // Dates & Guests
+            if (detailDates) detailDates.textContent = `${arrival} → ${departure}`;
+            if (detailNights) detailNights.textContent = `${nights} nuit${parseInt(nights, 10) > 1 ? 's' : ''}`;
+            if (detailGuests) detailGuests.textContent = `${guests} voyageur${parseInt(guests, 10) > 1 ? 's' : ''}`;
+
+            // Message
+            if (detailMessageBox) {
+                if (message.trim() !== '') {
+                    detailMessageBox.textContent = message;
+                    detailMessageBox.style.fontStyle = 'normal';
+                    detailMessageBox.style.color = 'var(--admin-ink)';
+                } else {
+                    detailMessageBox.textContent = 'Aucun message particulier transmis par le voyageur.';
+                    detailMessageBox.style.fontStyle = 'italic';
+                    detailMessageBox.style.color = 'var(--admin-muted)';
+                }
+            }
+
+            // Notes
+            if (detailNoteInput) {
+                detailNoteInput.value = notes;
+                detailNoteInput.dataset.id = id;
+            }
+            if (detailNoteSaved) detailNoteSaved.style.display = 'none';
+
+            // Google Calendar
+            if (detailActionGcal) detailActionGcal.href = gcalUrl;
+
+            // Delete
+            if (detailActionDelete) {
+                detailActionDelete.dataset.id = id;
+                detailActionDelete.dataset.name = name;
+            }
+
+            detailModal.showModal();
+        };
+
+        if (detailModalClose && detailModal) {
+            detailModalClose.addEventListener('click', () => detailModal.close());
+            detailModal.addEventListener('click', (e) => {
+                if (e.target === detailModal) detailModal.close();
+            });
+        }
+
+        // Table Rows Click to open detail modal
+        document.querySelectorAll('.admin-table tbody tr').forEach((row) => {
+            row.addEventListener('click', (e) => {
+                if (e.target.closest('input, select, button, a, label')) return;
+                openDetailModal(row);
+            });
+        });
+
+        // "Détails" action button
+        document.querySelectorAll('.admin-action-btn--view').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const row = btn.closest('tr');
+                if (row) openDetailModal(row);
+            });
+        });
+
+        // Status change inside modal
+        if (detailStatusSelect) {
+            detailStatusSelect.addEventListener('change', async () => {
+                const id = detailStatusSelect.dataset.id;
+                const newStatus = detailStatusSelect.value;
+                detailStatusSelect.disabled = true;
+
+                try {
+                    const formData = new FormData();
+                    formData.append('admin_action', 'update_status');
+                    formData.append('csrf_token', csrfToken);
+                    formData.append('id', id);
+                    formData.append('status', newStatus);
+
+                    const res = await fetch('index.php', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.success) {
+                        detailStatusSelect.className = `admin-status-select admin-status-select--${newStatus}`;
+                        if (currentActiveRow) {
+                            currentActiveRow.dataset.status = newStatus;
+                            const rowSelect = currentActiveRow.querySelector('.admin-status-select');
+                            if (rowSelect) {
+                                rowSelect.value = newStatus;
+                                rowSelect.className = `admin-status-select admin-status-select--${newStatus}`;
+                            }
+                        }
+                        updateStatusCounts();
+                        filterRows();
+                    } else {
+                        alert(data.message || 'Erreur lors de la mise à jour du statut.');
+                    }
+                } catch (e) {
+                    alert('Erreur réseau lors de la mise à jour du statut.');
+                } finally {
+                    detailStatusSelect.disabled = false;
+                }
+            });
+        }
+
+        // Note save inside modal
+        if (detailNoteInput) {
+            const saveModalNote = async () => {
+                const id = detailNoteInput.dataset.id;
+                const note = detailNoteInput.value.trim();
+
+                try {
+                    const formData = new FormData();
+                    formData.append('admin_action', 'update_note');
+                    formData.append('csrf_token', csrfToken);
+                    formData.append('id', id);
+                    formData.append('note', note);
+
+                    const res = await fetch('index.php', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.success) {
+                        if (detailNoteSaved) {
+                            detailNoteSaved.style.display = 'inline';
+                            setTimeout(() => { detailNoteSaved.style.display = 'none'; }, 2000);
+                        }
+                        if (currentActiveRow) {
+                            currentActiveRow.dataset.notes = note;
+                            const rowNote = currentActiveRow.querySelector('.admin-note-input');
+                            if (rowNote) rowNote.value = note;
+                            currentActiveRow.dataset.searchText = `${currentActiveRow.dataset.searchText} ${note.toLowerCase()}`;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Modal note save failed', e);
+                }
+            };
+            detailNoteInput.addEventListener('change', saveModalNote);
+        }
+
+        // Delete inside modal
+        if (detailActionDelete) {
+            detailActionDelete.addEventListener('click', async () => {
+                const id = detailActionDelete.dataset.id;
+                const name = detailActionDelete.dataset.name || 'cette demande';
+                if (!confirm(`Voulez-vous vraiment supprimer définitivement la demande de "${name}" ?\nCette action est irréversible.`)) {
+                    return;
+                }
+
+                detailActionDelete.disabled = true;
+                try {
+                    const formData = new FormData();
+                    formData.append('admin_action', 'delete_inquiries');
+                    formData.append('csrf_token', csrfToken);
+                    formData.append('ids[]', id);
+
+                    const res = await fetch('index.php', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.success) {
+                        if (detailModal) detailModal.close();
+                        const row = document.getElementById(`row-${id}`);
+                        if (row) {
+                            row.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                            row.style.opacity = '0';
+                            row.style.transform = 'translateX(12px)';
+                            setTimeout(() => {
+                                row.remove();
+                                updateSelectionState();
+                                updateStatusCounts();
+                                const remaining = document.querySelectorAll('.admin-table tbody tr');
+                                if (remaining.length === 0) {
+                                    window.location.reload();
+                                }
+                            }, 260);
+                        }
+                    } else {
+                        alert(data.message || 'Erreur lors de la suppression.');
+                    }
+                } catch (err) {
+                    alert('Erreur réseau lors de la suppression.');
+                } finally {
+                    detailActionDelete.disabled = false;
                 }
             });
         }

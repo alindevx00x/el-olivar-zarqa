@@ -616,7 +616,7 @@ $arrow = $language === 'ar' ? '↖' : '↗';
                         <?php endfor; ?>
                     </select></div>
                 </div>
-                <div class="form-row form-row--dates">
+                <div class="form-row">
                     <div class="field"><label for="arrival"><?= h(t('form.arrival')) ?></label><input id="arrival" name="arrival" type="date" min="<?= h($today) ?>" value="<?= h($formValues['arrival']) ?>" required></div>
                     <div class="field"><label for="departure"><?= h(t('form.departure')) ?></label><input id="departure" name="departure" type="date" min="<?= h($today) ?>" value="<?= h($formValues['departure']) ?>" required></div>
                 </div>
