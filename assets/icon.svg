@@ -1,4 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#ea580c"/>
-  <text x="32" y="32" dy="0.35em" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="26" font-weight="600" fill="#ffffff">EO</text>
+<!-- Developer: Alindevx00x (https://alindevx00x.me) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1246 878" role="img" aria-label="El Olivar Zarqa">
+  <defs>
+    <linearGradient id="mountain" x1=".2" y1="0" x2=".8" y2="1">
+      <stop offset="0" stop-color="#696d3d"/>
+      <stop offset="1" stop-color="#535a35"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c5d87a"/>
+      <stop offset="1" stop-color="#93aa51"/>
+    </linearGradient>
+    <linearGradient id="fruit" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8bd46"/>
+      <stop offset="1" stop-color="#c99223"/>
+    </linearGradient>
+    <filter id="soft-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="8"/>
+      <feOffset dy="7"/>
+      <feComponentTransfer><feFuncA type="linear" slope=".18"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#soft-shadow)" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M68 594 344 218 459 378 668 82 914 437 1032 322 1177 594Z" fill="url(#mountain)" stroke="#efd78e" stroke-width="13"/>
+    <path d="M194 734C382 681 486 653 620 656c148 3 273 25 433 78" fill="none" stroke="#ead28c" stroke-width="18"/>
+    <g fill="url(#leaf)" stroke="#aac265" stroke-width="5">
+      <path d="M273 709c35-66 103-117 153-119 6 47-50 91-153 119Z"/>
+      <path d="M269 707c78-11 147 20 184 72-53 39-131 2-184-72Z"/>
+      <path d="M454 680c24-59 92-119 151-132 22 53-39 106-151 132Z"/>
+      <path d="M797 680c-24-59-92-119-151-132-22 53 39 106 151 132Z"/>
+      <path d="M975 709c-35-66-103-117-153-119-6 47 50 91 153 119Z"/>
+      <path d="M979 707c-78-11-147 20-184 72 53 39 131 2 184-72Z"/>
+    </g>
+    <g fill="url(#fruit)" stroke="#f0d47b" stroke-width="6">
+      <ellipse cx="580" cy="710" rx="37" ry="53" transform="rotate(4 580 710)"/>
+      <ellipse cx="683" cy="710" rx="37" ry="53" transform="rotate(-4 683 710)"/>
+    </g>
+  </g>
 </svg>

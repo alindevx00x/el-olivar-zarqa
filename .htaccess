@@ -1,0 +1,6 @@
+# Developer: Alindevx00x (https://alindevx00x.me)
+Options -Indexes
+
+<FilesMatch "\.(sql|md)$">
+    Require all denied
+</FilesMatch>
