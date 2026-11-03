@@ -70,8 +70,10 @@ if (!admin_is_signed_in() && $_SERVER['REQUEST_METHOD'] === 'POST' && $databaseR
 $requests = [];
 $totalRequests = 0;
 $currentPage = max(1, (int) ($_GET['page'] ?? 1));
-$pageSize = 50;
+$pageSize = 20;
 $pageCount = 1;
+$rangeStart = 0;
+$rangeEnd = 0;
 $dashboardError = '';
 
 if (admin_is_signed_in() && $databaseReady && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -109,6 +111,74 @@ if (admin_is_signed_in() && $databaseReady && $_SERVER['REQUEST_METHOD'] === 'PO
             $stmt = $pdo->prepare('UPDATE stay_inquiries SET admin_notes = :note WHERE id = :id');
             $stmt->execute([':note' => $note !== '' ? $note : null, ':id' => $inquiryId]);
             echo json_encode(['success' => true, 'id' => $inquiryId, 'note' => $note]);
+            exit;
+        }
+
+        if ($adminAction === 'delete_inquiries') {
+            $idsRaw = $_POST['ids'] ?? null;
+            $ids = [];
+            if (is_array($idsRaw)) {
+                $ids = array_values(array_filter(array_map('intval', $idsRaw), static fn($v) => $v > 0));
+            } elseif (is_string($idsRaw) || is_numeric($idsRaw)) {
+                $ids = array_values(array_filter(array_map('intval', explode(',', (string) $idsRaw)), static fn($v) => $v > 0));
+            }
+
+            if ($ids === []) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Aucune demande valide sélectionnée pour la suppression.']);
+                exit;
+            }
+
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $delStmt = $pdo->prepare("DELETE FROM stay_inquiries WHERE id IN ($placeholders)");
+            $delStmt->execute($ids);
+            $deletedCount = $delStmt->rowCount();
+
+            echo json_encode([
+                'success' => true,
+                'deleted_ids' => $ids,
+                'deleted_count' => $deletedCount,
+                'message' => $deletedCount > 1
+                    ? "{$deletedCount} demandes ont été supprimées avec succès."
+                    : 'La demande a été supprimée avec succès.',
+            ]);
+            exit;
+        }
+
+        if ($adminAction === 'update_whatsapp_number') {
+            $rawPhone = trim((string) ($_POST['whatsapp_number'] ?? ''));
+            $digitsOnly = preg_replace('/\D/', '', $rawPhone);
+
+            if (strlen($digitsOnly) < 8 || strlen($digitsOnly) > 16) {
+                echo json_encode(['success' => false, 'message' => 'Le numéro doit comporter entre 8 et 16 chiffres avec l’indicatif pays (ex: 212600000000).']);
+                exit;
+            }
+
+            try {
+                $pdo->exec(
+                    'CREATE TABLE IF NOT EXISTS site_settings (
+                        setting_key VARCHAR(64) NOT NULL PRIMARY KEY,
+                        setting_value TEXT NULL,
+                        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+                );
+
+                $stmt = $pdo->prepare(
+                    'INSERT INTO site_settings (setting_key, setting_value)
+                     VALUES (\'whatsapp_number\', :val)
+                     ON DUPLICATE KEY UPDATE setting_value = :val'
+                );
+                $stmt->execute([':val' => $digitsOnly]);
+
+                echo json_encode([
+                    'success' => true,
+                    'whatsapp_number' => $digitsOnly,
+                    'message' => 'Le numéro WhatsApp de contact a bien été enregistré !',
+                ]);
+            } catch (Throwable $e) {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Erreur lors de l’enregistrement : ' . $e->getMessage()]);
+            }
             exit;
         }
 
@@ -249,6 +319,8 @@ if (admin_is_signed_in() && $databaseReady) {
         $pageCount = max(1, (int) ceil($totalRequests / $pageSize));
         $currentPage = min($currentPage, $pageCount);
         $offset = ($currentPage - 1) * $pageSize;
+        $rangeStart = $totalRequests > 0 ? $offset + 1 : 0;
+        $rangeEnd = min($offset + $pageSize, $totalRequests);
         $statement = $pdo->prepare(
             'SELECT id, full_name, email, arrival_date, departure_date, guests, message, status, admin_notes, created_at
              FROM stay_inquiries ORDER BY created_at DESC, id DESC LIMIT :limit OFFSET :offset'
@@ -257,6 +329,16 @@ if (admin_is_signed_in() && $databaseReady) {
         $statement->bindValue(':offset', $offset, PDO::PARAM_INT);
         $statement->execute();
         $requests = $statement->fetchAll();
+
+        $currentWaNumber = '212600000000';
+        try {
+            $stmtWa = $pdo->query("SELECT setting_value FROM site_settings WHERE setting_key = 'whatsapp_number' LIMIT 1");
+            $valWa = $stmtWa ? $stmtWa->fetchColumn() : false;
+            if ($valWa !== false && trim((string) $valWa) !== '') {
+                $currentWaNumber = trim((string) $valWa);
+            }
+        } catch (Throwable) {
+        }
     } catch (Throwable $exception) {
         error_log('El Olivar admin request list failed: ' . $exception->getMessage());
         $dashboardError = 'Les demandes n’ont pas pu être chargées. Vérifiez que la table stay_inquiries existe.';
@@ -309,6 +391,7 @@ $csrfToken = admin_csrf_token();
         <a class="admin-brand" href="../index.php"><img src="../assets/icon.svg" alt=""><span><strong>EL OLIVAR</strong><small>ADMINISTRATION</small></span></a>
         <div class="admin-topbar__actions">
             <span>Connecté : <strong><?= admin_h((string) $_SESSION['admin_username']) ?></strong></span>
+            <button type="button" id="btn-open-whatsapp-modal" class="admin-button admin-button--subtle admin-button--sm" title="Modifier le numéro WhatsApp utilisé par le bouton flottant">💬 WhatsApp</button>
             <button type="button" id="btn-open-password-modal" class="admin-button admin-button--subtle admin-button--sm">🔑 Mot de passe</button>
             <form method="post" action="logout.php"><input type="hidden" name="csrf_token" value="<?= admin_h($csrfToken) ?>"><button class="admin-button admin-button--subtle" type="submit">Déconnexion</button></form>
         </div>
@@ -347,6 +430,9 @@ $csrfToken = admin_csrf_token();
                 <button id="admin-gcal-btn-bar" class="admin-button admin-button--gcal admin-button--sm" type="button">
                     <img src="../assets/google-calendar.svg" alt="" width="16" height="16">
                     <span>Ajouter à Google Calendar</span>
+                </button>
+                <button id="admin-delete-selection-btn" class="admin-button admin-button--danger admin-button--sm" type="button" title="Supprimer définitivement les demandes sélectionnées">
+                    <span>🗑️ Supprimer (<span id="admin-delete-count">0</span>)</span>
                 </button>
                 <button id="admin-clear-selection" class="admin-button admin-button--secondary admin-button--sm" type="button">Tout désélectionner</button>
             </div>
@@ -421,10 +507,15 @@ $csrfToken = admin_csrf_token();
                                 </div>
                             </td>
                             <td class="admin-table__col-actions">
-                                <a class="admin-action-btn" href="<?= admin_h($singleGcalUrl) ?>" target="_blank" rel="noopener noreferrer" title="Ajouter cette demande à Google Calendar">
-                                    <img src="../assets/google-calendar.svg" alt="" width="15" height="15">
-                                    <span>Google Cal</span>
-                                </a>
+                                <div class="admin-row-actions">
+                                    <a class="admin-action-btn" href="<?= admin_h($singleGcalUrl) ?>" target="_blank" rel="noopener noreferrer" title="Ajouter cette demande à Google Calendar">
+                                        <img src="../assets/google-calendar.svg" alt="" width="14" height="14">
+                                        <span>GCal</span>
+                                    </a>
+                                    <button type="button" class="admin-action-btn admin-action-btn--delete" data-id="<?= (int) $request['id'] ?>" data-name="<?= admin_h((string) $request['full_name']) ?>" title="Supprimer définitivement cette demande" aria-label="Supprimer la demande de <?= admin_h((string) $request['full_name']) ?>">
+                                        <span aria-hidden="true">🗑️</span>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -432,13 +523,48 @@ $csrfToken = admin_csrf_token();
                 </table></div>
             <?php endif; ?>
         </section>
-        <?php if ($pageCount > 1): ?>
-            <nav class="admin-pagination" aria-label="Pagination des demandes">
-                <?php if ($currentPage > 1): ?><a href="?page=<?= $currentPage - 1 ?>">← Précédent</a><?php endif; ?>
-                <span>Page <?= $currentPage ?> sur <?= $pageCount ?></span>
-                <?php if ($currentPage < $pageCount): ?><a href="?page=<?= $currentPage + 1 ?>">Suivant →</a><?php endif; ?>
-            </nav>
-        <?php endif; ?>
+        <div class="admin-pagination-container">
+            <div class="admin-pagination-info">
+                Affichage de <strong><?= $rangeStart ?></strong> à <strong><?= $rangeEnd ?></strong> sur <strong><?= $totalRequests ?></strong> demande(s) &bull; <em>20 par page</em>
+            </div>
+            <?php if ($pageCount > 1): ?>
+                <nav class="admin-pagination" aria-label="Pagination des demandes">
+                    <?php if ($currentPage > 1): ?>
+                        <a href="?page=1" class="admin-pagination-link" title="Première page">«</a>
+                        <a href="?page=<?= $currentPage - 1 ?>" class="admin-pagination-link" title="Page précédente">←</a>
+                    <?php endif; ?>
+                    
+                    <?php
+                    $startPage = max(1, $currentPage - 2);
+                    $endPage = min($pageCount, $currentPage + 2);
+                    if ($startPage > 1) {
+                        echo '<a href="?page=1" class="admin-pagination-link">1</a>';
+                        if ($startPage > 2) {
+                            echo '<span class="admin-pagination-ellipsis">…</span>';
+                        }
+                    }
+                    for ($p = $startPage; $p <= $endPage; $p++) {
+                        if ($p === $currentPage) {
+                            echo '<span class="admin-pagination-link is-current" aria-current="page">' . $p . '</span>';
+                        } else {
+                            echo '<a href="?page=' . $p . '" class="admin-pagination-link">' . $p . '</a>';
+                        }
+                    }
+                    if ($endPage < $pageCount) {
+                        if ($endPage < $pageCount - 1) {
+                            echo '<span class="admin-pagination-ellipsis">…</span>';
+                        }
+                        echo '<a href="?page=' . $pageCount . '" class="admin-pagination-link">' . $pageCount . '</a>';
+                    }
+                    ?>
+
+                    <?php if ($currentPage < $pageCount): ?>
+                        <a href="?page=<?= $currentPage + 1 ?>" class="admin-pagination-link" title="Page suivante">→</a>
+                        <a href="?page=<?= $pageCount ?>" class="admin-pagination-link" title="Dernière page">»</a>
+                    <?php endif; ?>
+                </nav>
+            <?php endif; ?>
+        </div>
         <p class="admin-dashboard__note">Les demandes sont conservées dans la base MySQL du site. L’export CSV contient toutes les demandes avec notes internes.</p>
     </main>
 
@@ -504,6 +630,40 @@ $csrfToken = admin_csrf_token();
         </div>
     </dialog>
 
+    <!-- Modal Configuration WhatsApp -->
+    <dialog id="admin-whatsapp-modal" class="admin-modal" aria-labelledby="whatsapp-modal-title">
+        <div class="admin-modal__card">
+            <div class="admin-modal__header">
+                <div class="admin-modal__title-group">
+                    <img src="../assets/whatsapp.svg" alt="" width="26" height="26">
+                    <div>
+                        <h2 id="whatsapp-modal-title">Numéro WhatsApp de contact</h2>
+                        <p class="admin-modal__subtitle">Gérez le numéro utilisé par le bouton flottant sur le site</p>
+                    </div>
+                </div>
+                <button type="button" class="admin-modal__close" id="whatsapp-modal-close" aria-label="Fermer">×</button>
+            </div>
+            <form id="admin-whatsapp-form" class="admin-modal__body admin-form" method="post">
+                <input type="hidden" name="csrf_token" value="<?= admin_h($csrfToken) ?>">
+                <input type="hidden" name="admin_action" value="update_whatsapp_number">
+                <div id="wa-form-feedback" class="admin-alert" style="display: none;"></div>
+                <label for="wa_phone_number">Numéro WhatsApp officiel (avec indicatif pays)</label>
+                <input type="text" id="wa_phone_number" name="whatsapp_number" value="<?= admin_h($currentWaNumber ?? '212600000000') ?>" placeholder="Ex: 212600000000" required>
+                <p class="admin-modal__notice" style="margin-top: 8px;">
+                    Saisissez l’indicatif pays sans le signe + ni espaces (ex: <strong>212612345678</strong> pour le Maroc).<br>
+                    Le bouton WhatsApp flottant sur le site dirigera immédiatement les visiteurs vers cette ligne WhatsApp.
+                </p>
+                <div style="margin: 12px 0 16px; font-size: 13px;">
+                    Aperçu du lien direct : <a id="wa-preview-link" href="https://wa.me/<?= preg_replace('/\D/', '', $currentWaNumber ?? '212600000000') ?>" target="_blank" rel="noopener noreferrer" style="color: #1a73e8; font-weight: 600; text-decoration: underline;">Tester la discussion WhatsApp ↗</a>
+                </div>
+                <div class="admin-modal__options" style="margin-top: 15px;">
+                    <button type="submit" class="admin-button">Enregistrer</button>
+                    <button type="button" id="whatsapp-modal-cancel" class="admin-button admin-button--secondary">Annuler</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
     <script>
     (() => {
         const csrfToken = <?= json_encode($csrfToken) ?>;
@@ -555,6 +715,8 @@ $csrfToken = admin_csrf_token();
             if (selectionBar && selectionCount) {
                 if (count > 0) {
                     selectionCount.textContent = String(count);
+                    const delCountEl = document.getElementById('admin-delete-count');
+                    if (delCountEl) delCountEl.textContent = String(count);
                     selectionBar.style.display = 'flex';
                 } else {
                     selectionBar.style.display = 'none';
@@ -773,6 +935,176 @@ $csrfToken = admin_csrf_token();
                 filterRows();
             });
         });
+
+        // Single Deletion
+        document.querySelectorAll('.admin-action-btn--delete').forEach((btn) => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                const name = btn.dataset.name || 'cette demande';
+                if (!confirm(`Voulez-vous vraiment supprimer définitivement la demande de "${name}" ?\nCette action est irréversible.`)) {
+                    return;
+                }
+
+                btn.disabled = true;
+                try {
+                    const formData = new FormData();
+                    formData.append('admin_action', 'delete_inquiries');
+                    formData.append('csrf_token', csrfToken);
+                    formData.append('ids[]', id);
+
+                    const res = await fetch('index.php', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.success) {
+                        const row = document.getElementById(`row-${id}`);
+                        if (row) {
+                            row.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                            row.style.opacity = '0';
+                            row.style.transform = 'translateX(12px)';
+                            setTimeout(() => {
+                                row.remove();
+                                updateSelectionState();
+                                updateStatusCounts();
+                                const remaining = document.querySelectorAll('.admin-table tbody tr');
+                                if (remaining.length === 0) {
+                                    window.location.reload();
+                                }
+                            }, 260);
+                        }
+                    } else {
+                        alert(data.message || 'Erreur lors de la suppression.');
+                    }
+                } catch (err) {
+                    alert('Erreur réseau lors de la suppression.');
+                } finally {
+                    btn.disabled = false;
+                }
+            });
+        });
+
+        // Bulk Deletion
+        const btnDeleteSelection = document.getElementById('admin-delete-selection-btn');
+        if (btnDeleteSelection) {
+            btnDeleteSelection.addEventListener('click', async () => {
+                const selected = getSelected();
+                if (selected.length === 0) return;
+
+                const count = selected.length;
+                if (!confirm(`Voulez-vous vraiment supprimer définitivement les ${count} demande(s) sélectionnée(s) ?\nCette action est irréversible.`)) {
+                    return;
+                }
+
+                btnDeleteSelection.disabled = true;
+                const ids = selected.map((cb) => cb.value);
+
+                try {
+                    const formData = new FormData();
+                    formData.append('admin_action', 'delete_inquiries');
+                    formData.append('csrf_token', csrfToken);
+                    ids.forEach((id) => formData.append('ids[]', id));
+
+                    const res = await fetch('index.php', { method: 'POST', body: formData });
+                    const data = await res.json();
+
+                    if (data.success) {
+                        ids.forEach((id) => {
+                            const row = document.getElementById(`row-${id}`);
+                            if (row) {
+                                row.style.transition = 'opacity 0.25s ease';
+                                row.style.opacity = '0';
+                                setTimeout(() => row.remove(), 250);
+                            }
+                        });
+
+                        setTimeout(() => {
+                            updateSelectionState();
+                            updateStatusCounts();
+                            const remaining = document.querySelectorAll('.admin-table tbody tr');
+                            if (remaining.length === 0) {
+                                window.location.reload();
+                            }
+                        }, 260);
+                    } else {
+                        alert(data.message || 'Erreur lors de la suppression groupée.');
+                    }
+                } catch (err) {
+                    alert('Erreur réseau lors de la suppression groupée.');
+                } finally {
+                    btnDeleteSelection.disabled = false;
+                }
+            });
+        }
+
+        // WhatsApp Modal
+        const btnWaModal = document.getElementById('btn-open-whatsapp-modal');
+        const modalWa = document.getElementById('admin-whatsapp-modal');
+        const closeWaModal = document.getElementById('whatsapp-modal-close');
+        const cancelWaModal = document.getElementById('whatsapp-modal-cancel');
+        const formWa = document.getElementById('admin-whatsapp-form');
+        const feedbackWa = document.getElementById('wa-form-feedback');
+        const waInput = document.getElementById('wa_phone_number');
+        const waPreview = document.getElementById('wa-preview-link');
+
+        if (btnWaModal && modalWa) {
+            btnWaModal.addEventListener('click', () => {
+                if (feedbackWa) feedbackWa.style.display = 'none';
+                modalWa.showModal();
+            });
+        }
+        if (closeWaModal && modalWa) {
+            closeWaModal.addEventListener('click', () => modalWa.close());
+        }
+        if (cancelWaModal && modalWa) {
+            cancelWaModal.addEventListener('click', () => modalWa.close());
+        }
+        if (modalWa) {
+            modalWa.addEventListener('click', (e) => {
+                if (e.target === modalWa) modalWa.close();
+            });
+        }
+        if (waInput && waPreview) {
+            waInput.addEventListener('input', () => {
+                const clean = waInput.value.replace(/\D/g, '');
+                waPreview.href = clean ? `https://wa.me/${clean}` : '#';
+            });
+        }
+        if (formWa) {
+            formWa.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitBtn = formWa.querySelector('button[type="submit"]');
+                if (submitBtn) submitBtn.disabled = true;
+
+                try {
+                    const formData = new FormData(formWa);
+                    const res = await fetch('index.php', { method: 'POST', body: formData });
+                    const data = await res.json();
+
+                    if (feedbackWa) {
+                        feedbackWa.style.display = 'block';
+                        if (data.success) {
+                            feedbackWa.className = 'admin-alert admin-alert--success';
+                            feedbackWa.textContent = data.message;
+                            if (waInput && data.whatsapp_number) {
+                                waInput.value = data.whatsapp_number;
+                                if (waPreview) waPreview.href = `https://wa.me/${data.whatsapp_number}`;
+                            }
+                            setTimeout(() => { modalWa.close(); }, 1800);
+                        } else {
+                            feedbackWa.className = 'admin-alert admin-alert--error';
+                            feedbackWa.textContent = data.message || 'Une erreur est survenue.';
+                        }
+                    }
+                } catch (err) {
+                    if (feedbackWa) {
+                        feedbackWa.style.display = 'block';
+                        feedbackWa.className = 'admin-alert admin-alert--error';
+                        feedbackWa.textContent = 'Erreur réseau.';
+                    }
+                } finally {
+                    if (submitBtn) submitBtn.disabled = false;
+                }
+            });
+        }
 
         // Password Modal
         const btnPasswordModal = document.getElementById('btn-open-password-modal');

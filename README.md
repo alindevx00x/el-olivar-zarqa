@@ -42,6 +42,9 @@ Pour réinitialiser le compte, supprimez son enregistrement dans la table `admin
   - **Notes internes privées** : Prise de notes inline avec sauvegarde automatique (ex: *« Acompte reçu »*, *« Lit bébé »*).
   - **Filtres & recherche en temps réel** : Recherche instantanée par nom, e-mail, dates, message ou note interne, et filtrage par badge de statut.
   - **Ajout à Google Calendar** : Bouton individuel par ligne ou sélection multiple avec modal interactif et export de calendrier universel `.ics`.
+  - **Suppression individuelle & groupée** : Supprimez une demande en un clic (🗑️) ou plusieurs demandes sélectionnées avec confirmation de sécurité.
+  - **Gestion du numéro WhatsApp** : Modifiez à tout moment le numéro de contact WhatsApp utilisé par le bouton flottant via la modale dédiée sans toucher au code.
+  - **Pagination 20 par page** : Affichage optimisé de 20 enregistrements par page avec navigation chiffrée, accès direct et compteurs d'enregistrements.
   - **Changement de mot de passe sécurisé** : Modifiez votre mot de passe administrateur directement depuis l'en-tête du tableau de bord.
   - **Export CSV** : Téléchargement complet des demandes pour Excel ou tableurs.
 

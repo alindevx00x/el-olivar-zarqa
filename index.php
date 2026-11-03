@@ -182,7 +182,18 @@ $airbnbUrl = 'https://www.airbnb.es/rooms/1224679573074878063';
 $instagramUrl = 'https://www.instagram.com/el_olivar_zarqa/';
 $googleMapsUrl = 'https://maps.app.goo.gl/K4xCdhYZC3KkJu1q8';
 
-$whatsappNumber = '212600000000'; // À remplacer par le numéro WhatsApp officiel
+$whatsappNumber = '212600000000';
+try {
+    $pdoSettings = database_connection();
+    $stmtSettings = $pdoSettings->query("SELECT setting_value FROM site_settings WHERE setting_key = 'whatsapp_number' LIMIT 1");
+    $dbWa = $stmtSettings ? $stmtSettings->fetchColumn() : false;
+    if ($dbWa !== false && trim((string) $dbWa) !== '') {
+        $whatsappNumber = trim((string) $dbWa);
+    }
+} catch (Throwable) {
+    // Fallback gracieux si la base ou la table n'est pas encore accessible
+}
+
 $whatsappMessage = match ($language) {
     'ar' => 'السلام عليكم دار إل أوليفار، أود الاستفسار عن إمكانية الحجز لديكم.',
     'en' => 'Hello El Olivar, I would like to inquire about booking a stay.',
