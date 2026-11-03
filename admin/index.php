@@ -166,7 +166,7 @@ if (admin_is_signed_in() && $databaseReady && $_SERVER['REQUEST_METHOD'] === 'PO
                 $stmt = $pdo->prepare(
                     'INSERT INTO site_settings (setting_key, setting_value)
                      VALUES (\'whatsapp_number\', :val)
-                     ON DUPLICATE KEY UPDATE setting_value = :val'
+                     ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)'
                 );
                 $stmt->execute([':val' => $digitsOnly]);
 
