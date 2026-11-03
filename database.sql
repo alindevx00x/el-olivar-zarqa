@@ -38,8 +38,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO site_settings (setting_key, setting_value)
+INSERT IGNORE INTO site_settings (setting_key, setting_value)
 VALUES 
     ('whatsapp_number', '212600000000'),
-    ('whatsapp_enabled', '1')
-ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);
+    ('whatsapp_enabled', '1');

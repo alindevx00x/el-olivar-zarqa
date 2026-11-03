@@ -372,7 +372,118 @@ $csrfToken = admin_csrf_token();
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/admin.css">
+    <?php
+        $adminCssPath = __DIR__ . '/../assets/admin.css';
+        $adminCssVer = file_exists($adminCssPath) ? (string) filemtime($adminCssPath) : '1';
+    ?>
+    <link rel="stylesheet" href="../assets/admin.css?v=<?= $adminCssVer ?>">
+    <style>
+    /* Inline Fallback & Enhanced Cross-Browser Controls */
+    .admin-checkbox {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        border: 1.5px solid #a8b0a2;
+        border-radius: 4px;
+        background: #ffffff;
+        cursor: pointer;
+        display: inline-grid;
+        place-content: center;
+        vertical-align: middle;
+        accent-color: #4e6149;
+        transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+    }
+    .admin-checkbox:hover { border-color: #4e6149; background: #fafbf9; }
+    .admin-checkbox:checked { background-color: #4e6149; border-color: #4e6149; }
+    .admin-checkbox:checked::before {
+        content: "";
+        width: 9px;
+        height: 5px;
+        border-left: 2px solid #ffffff;
+        border-bottom: 2px solid #ffffff;
+        transform: rotate(-45deg) translate(1px, -1px);
+    }
+    .admin-checkbox:indeterminate { background-color: #4e6149; border-color: #4e6149; }
+    .admin-checkbox:indeterminate::before {
+        content: "";
+        width: 8px;
+        height: 2px;
+        background: #ffffff;
+        transform: none;
+    }
+    .admin-checkbox:focus-visible { outline: 2px solid #4e6149; outline-offset: 2px; }
+
+    .admin-toggle-box {
+        margin-bottom: 18px;
+        padding: 16px 18px;
+        background: #faf8f2;
+        border: 1px solid #dfe1d8;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 1px 3px rgba(38,54,44,.04);
+        transition: border-color .15s ease, background-color .15s ease;
+    }
+    .admin-toggle-box:hover { border-color: #cbd0c4; background: #fdfcf7; }
+    .admin-toggle-info { flex: 1; min-width: 0; }
+    .admin-toggle-title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .admin-toggle-info strong { font-size: 14px; font-weight: 600; color: #293129; letter-spacing: -0.01em; }
+    .admin-toggle-info small { display: block; margin-top: 4px; color: #71786e; font-size: 12px; line-height: 1.45; }
+    .admin-badge-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2.5px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.35;
+        transition: all .2s ease;
+    }
+    .admin-badge-status--on { background: #eaf5eb; color: #276735; border: 1px solid #cbe5ce; }
+    .admin-badge-status--off { background: #f0f1ed; color: #6b7268; border: 1px solid #dcdfd8; }
+    .admin-switch {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 28px;
+        flex-shrink: 0;
+        margin: 0;
+        cursor: pointer;
+        user-select: none;
+    }
+    .admin-switch input { opacity: 0; width: 0; height: 0; position: absolute; pointer-events: none; }
+    .admin-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd2c7;
+        transition: background-color .25s ease, box-shadow .25s ease;
+        border-radius: 28px;
+    }
+    .admin-slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 3px;
+        bottom: 3px;
+        background-color: #ffffff;
+        transition: transform .25s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 50%;
+        box-shadow: 0 2px 5px rgba(0,0,0,.18);
+    }
+    .admin-switch input:checked + .admin-slider { background-color: #4e6149; }
+    .admin-switch input:focus-visible + .admin-slider { box-shadow: 0 0 0 3px rgba(78,97,73,.25); }
+    .admin-switch input:checked + .admin-slider:before { transform: translateX(20px); }
+    </style>
 </head>
 <body class="admin-page">
 <?php if (!admin_is_signed_in()): ?>
@@ -666,11 +777,13 @@ $csrfToken = admin_csrf_token();
                 <!-- Option Afficher / Masquer sur tout le site -->
                 <div class="admin-toggle-box">
                     <div class="admin-toggle-info">
-                        <strong>Visibilité sur le site public</strong>
-                        <small>Affiche ou masque le bouton WhatsApp flottant pour tous les visiteurs</small>
-                        <span id="wa-status-badge" class="admin-badge-status <?= ($currentWaEnabled ?? true) ? 'admin-badge-status--on' : 'admin-badge-status--off' ?>">
-                            <?= ($currentWaEnabled ?? true) ? '● Actuellement affiché' : '○ Actuellement masqué' ?>
-                        </span>
+                        <div class="admin-toggle-title-row">
+                            <strong>Visibilité sur le site public</strong>
+                            <span id="wa-status-badge" class="admin-badge-status <?= ($currentWaEnabled ?? true) ? 'admin-badge-status--on' : 'admin-badge-status--off' ?>">
+                                <?= ($currentWaEnabled ?? true) ? '● Actuellement affiché' : '○ Actuellement masqué' ?>
+                            </span>
+                        </div>
+                        <small>Affiche ou masque le bouton WhatsApp flottant pour tous les visiteurs du site</small>
                     </div>
                     <label class="admin-switch" title="Activer / Désactiver">
                         <input type="checkbox" id="wa_enabled_switch" name="whatsapp_enabled" value="1" <?= ($currentWaEnabled ?? true) ? 'checked' : '' ?>>

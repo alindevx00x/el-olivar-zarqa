@@ -229,7 +229,13 @@ $canonicalUrl = $appRootUrl . '/';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/styles.css">
+    <?php
+        $stylesCssPath = __DIR__ . '/assets/styles.css';
+        $stylesCssVer = file_exists($stylesCssPath) ? (string) filemtime($stylesCssPath) : '1';
+        $scriptJsPath = __DIR__ . '/assets/script.js';
+        $scriptJsVer = file_exists($scriptJsPath) ? (string) filemtime($scriptJsPath) : '1';
+    ?>
+    <link rel="stylesheet" href="assets/styles.css?v=<?= $stylesCssVer ?>">
 
     <!-- Open Graph & Social Sharing -->
     <meta property="og:type" content="website">
@@ -647,6 +653,6 @@ $canonicalUrl = $appRootUrl . '/';
         <button class="lightbox__next" type="button" aria-label="<?= h(t('gallery.next')) ?>">→</button>
     </dialog>
 
-    <script src="assets/script.js" defer></script>
+    <script src="assets/script.js?v=<?= $scriptJsVer ?>" defer></script>
 </body>
 </html>
